@@ -130,7 +130,7 @@ See [AI-DEVELOPMENT-POLICY.md](AI-DEVELOPMENT-POLICY.md) for the complete guidel
 
 - **Version:** 2.0.0.0
 - **Tag:** `v2.0.0.0`
-- **Package:** `Server_Release 2.0.0.0.zip`
+- **Package:** `Main_Release.zip`
 - **Format:** ZIP Archive
 
 ## 📚 Official Forum Post
