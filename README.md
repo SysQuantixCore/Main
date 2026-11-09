@@ -7,161 +7,161 @@
 
 [English](README.md) | [Português-BR](README.BRASIL.md)
 
-**Uma versão aprimorada do código-fonte da Main.exe do MU Online, baseada na source 5.2, com correções, otimizações e adaptações para a Season 6.3.**
+**An enhanced version of the MU Online Main.exe source code, based on source 5.2, featuring fixes, optimizations, and adaptations for Season 6.3.**
 
-Este projeto tem como objetivo aprimorar a estabilidade, o desempenho, a compatibilidade e a estrutura do cliente MU Online, oferecendo uma base de desenvolvimento para pesquisadores, estudantes e desenvolvedores independentes.
+This project aims to improve the stability, performance, compatibility, and structure of the MU Online client, providing a development foundation for researchers, students, and independent developers.
 
 ---
 
-## 📋 Descrição
+## 📋 Description
 
-A Main.exe é um componente essencial do cliente MU Online, responsável pela execução do jogo, gerenciamento dos recursos gráficos e interação entre o cliente e o servidor.
+Main.exe is an essential component of the MU Online client, responsible for running the game, managing graphical resources, and handling interaction between the client and the server.
 
-Esta versão utiliza como base a source 5.2 do MU Online e incorpora correções e melhorias direcionadas à compatibilidade com a Season 6.3.
+This version is based on the MU Online source 5.2 and incorporates fixes and improvements aimed at compatibility with Season 6.3.
 
-O projeto também busca oferecer uma estrutura organizada para análise técnica, manutenção, otimização e desenvolvimento de novas funcionalidades.
+The project also aims to provide an organized structure for technical analysis, maintenance, optimization, and the development of new features.
 
-## ✨ Recursos e Aprimoramentos
+## ✨ Features and Improvements
 
-- **Correções de bugs:** identificação e correção de problemas presentes na implementação original.
-- **Otimização de desempenho:** melhorias no código para reduzir o consumo de recursos e proporcionar maior estabilidade e fluidez.
-- **Compatibilidade Season 6.3:** adaptações e integração de funcionalidades relacionadas à versão 6.3.
-- **Novos recursos:** implementação e aprimoramento de funcionalidades do cliente.
-- **Estabilidade:** melhorias na execução e no gerenciamento de recursos.
-- **Manutenibilidade:** organização e aprimoramento da estrutura do código-fonte.
-- **Documentação:** informações técnicas para auxiliar na compreensão, manutenção e personalização do projeto.
-- **Desenvolvimento assistido por IA:** utilização responsável de ferramentas de inteligência artificial para análise, depuração, otimização e documentação do código.
+- **Bug fixes:** identification and correction of issues present in the original implementation.
+- **Performance optimization:** code improvements to reduce resource consumption and provide greater stability and smoothness.
+- **Season 6.3 compatibility:** adaptations and integration of features related to version 6.3.
+- **New features:** implementation and enhancement of client functionalities.
+- **Stability:** improvements to execution and resource management.
+- **Maintainability:** organization and improvement of the source code structure.
+- **Documentation:** technical information to assist with understanding, maintenance, and customization of the project.
+- **AI-assisted development:** responsible use of artificial intelligence tools for code analysis, debugging, optimization, and documentation.
 
-## 🛠️ Tecnologias e Ferramentas
+## 🛠️ Technologies and Tools
 
-| Tecnologia | Aplicação |
+| Technology | Application |
 |---|---|
-| **C/C++** | Desenvolvimento do cliente |
-| **Visual Studio** | Ambiente de desenvolvimento e compilação |
-| **Microsoft SQL Server** | Infraestrutura de banco de dados do servidor |
-| **Windows SDK** | Recursos e APIs do sistema operacional |
-| **Git** | Controle de versão |
+| **C/C++** | Client development |
+| **Visual Studio** | Development and compilation environment |
+| **Microsoft SQL Server** | Server database infrastructure |
+| **Windows SDK** | Operating system resources and APIs |
+| **Git** | Version control |
 
-## 📦 Requisitos
+## 📦 Requirements
 
-Antes de iniciar o desenvolvimento, verifique os seguintes requisitos:
+Before starting development, make sure you have the following requirements:
 
 - [Microsoft Visual Studio](https://visualstudio.microsoft.com/pt-br/downloads/)
 - [Microsoft SQL Server](https://www.microsoft.com/pt-br/sql-server/sql-server-downloads)
 - [Source Server - ProjectRebirthMu](https://github.com/ProjectRebirthMu/Server)
-- Git para gerenciamento do código-fonte.
+- Git for source code management.
 
-Os componentes necessários do Visual Studio e do Windows SDK dependem da configuração original da solução.
+The Visual Studio and Windows SDK components required depend on the solution's original configuration.
 
-## 🚀 Instalação
+## 🚀 Installation
 
-### 1. Clonar o repositório
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/SysQuantixCore/MuOnline-Main-Source.git
 ```
 
-### 2. Preparar o ambiente
+### 2. Set up the environment
 
-Instale as ferramentas e dependências necessárias para abrir e compilar a solução no Visual Studio.
+Install the tools and dependencies required to open and compile the solution in Visual Studio.
 
-### 3. Abrir o projeto
+### 3. Open the project
 
-Abra a solução da Main.exe no Visual Studio e verifique as configurações de compilação, plataforma e dependências.
+Open the Main.exe solution in Visual Studio and check the build, platform, and dependency settings.
 
-### 4. Compilar o código-fonte
+### 4. Compile the source code
 
-Selecione a configuração desejada e compile a solução para gerar o executável Main.exe.
+Select the desired configuration and build the solution to generate the Main.exe executable.
 
-### 5. Validar a implementação
+### 5. Validate the implementation
 
-Execute testes para verificar o funcionamento, a compatibilidade, a estabilidade e o desempenho do cliente.
+Run tests to verify the client's functionality, compatibility, stability, and performance.
 
-## 🤝 Contribuição
+## 🤝 Contributing
 
-Contribuições de desenvolvedores independentes, estudantes e pesquisadores são bem-vindas.
+Contributions from independent developers, students, and researchers are welcome.
 
-Para contribuir:
+To contribute:
 
-1. Faça um fork deste repositório.
-2. Clone o projeto em seu ambiente local.
-3. Crie uma branch para suas modificações:
+1. Fork this repository.
+2. Clone the project to your local environment.
+3. Create a branch for your changes:
 
 ```bash
-git checkout -b minha-branch
+git checkout -b my-branch
 ```
 
-4. Desenvolva suas alterações e implemente as melhorias necessárias.
-5. Teste e valide as modificações.
-6. Registre suas alterações:
+4. Develop your changes and implement the necessary improvements.
+5. Test and validate your modifications.
+6. Commit your changes:
 
 ```bash
 git add .
-git commit -m "Descrição das modificações"
+git commit -m "Description of changes"
 ```
 
-7. Envie sua branch:
+7. Push your branch:
 
 ```bash
-git push origin minha-branch
+git push origin my-branch
 ```
 
-8. Abra um Pull Request para análise.
+8. Open a Pull Request for review.
 
-Consulte o arquivo `CONTRIBUTING.md`, quando disponível, para conhecer as diretrizes de colaboração.
+Refer to the `CONTRIBUTING.md` file, when available, for collaboration guidelines.
 
-## 🤖 Desenvolvimento Assistido por Inteligência Artificial
+## 🤖 AI-Assisted Development
 
-O projeto permite o uso responsável de ferramentas de Inteligência Artificial como apoio ao desenvolvimento de software.
+The project allows the responsible use of Artificial Intelligence tools to support software development.
 
-São aceitas aplicações de IA para:
+AI applications are accepted for:
 
-- Análise e compreensão do código-fonte.
-- Identificação e correção de bugs.
-- Otimização e refatoração de código C/C++.
-- Pesquisa e experimentação acadêmica.
-- Desenvolvimento de testes e documentação.
-- Estudos de compatibilidade e desempenho.
+- Source code analysis and understanding.
+- Bug identification and fixing.
+- C/C++ code optimization and refactoring.
+- Academic research and experimentation.
+- Test and documentation development.
+- Compatibility and performance studies.
 
-Os colaboradores permanecem responsáveis pela revisão humana, validação técnica, segurança e procedência das contribuições.
+Contributors remain responsible for human review, technical validation, security, and the provenance of their contributions.
 
-Consulte [AI-DEVELOPMENT-POLICY.md](AI-DEVELOPMENT-POLICY.md) para obter as diretrizes completas.
+See [AI-DEVELOPMENT-POLICY.md](AI-DEVELOPMENT-POLICY.md) for the complete guidelines.
 
-## 📚 Postagem Oficial do Fórum
+## 📚 Official Forum Post
 
-Consulte a publicação original no fórum:
+See the original forum post:
 
-[TuServerMu - Discussão e informações do projeto](https://tuservermu.com.ve/index.php?topic=57374.msg294187#msg294187)
+[TuServerMu - Project discussion and information](https://tuservermu.com.ve/index.php?topic=57374.msg294187#msg294187)
 
-## 👥 Créditos e Agradecimentos
+## 👥 Credits and Acknowledgments
 
-Este projeto reconhece as contribuições históricas e os trabalhos relacionados à evolução do código-fonte.
+This project acknowledges the historical contributions and work related to the evolution of the source code.
 
-- [Webzen](https://en.wikipedia.org/wiki/Webzen) — origem e desenvolvimento do MU Online.
+- [Webzen](https://en.wikipedia.org/wiki/Webzen) — origin and development of MU Online.
 - [louis](https://tuservermu.com.ve/index.php?action=profile;u=4199)
 - [OgoCx](https://tuservermu.com.ve/index.php?action=profile;u=8220)
-- [myheart](https://tuservermu.com.ve/index.php?action=profile;u=10705) — arquivos CashShop.
+- [myheart](https://tuservermu.com.ve/index.php?action=profile;u=10705) — CashShop files.
 - [kayito](https://tuservermu.com.ve/index.php?action=profile;u=5033)
-- [takumi12](https://tuservermu.com.ve/index.php?action=profile;u=16349) — MuHelper e Right Click.
-- [Qubit](https://tuservermu.com.ve/index.php?action=profile;u=36306) — desenvolvimento, melhorias e manutenção.
+- [takumi12](https://tuservermu.com.ve/index.php?action=profile;u=16349) — MuHelper and Right Click.
+- [Qubit](https://tuservermu.com.ve/index.php?action=profile;u=36306) — development, improvements, and maintenance.
 
-**Organização:** [SysQuantixCore](https://github.com/SysQuantixCore)
+**Organization:** [SysQuantixCore](https://github.com/SysQuantixCore)
 
-## 📄 Licença
+## 📄 License
 
-Este projeto é distribuído sob os termos da **MIT License**.
+This project is distributed under the terms of the **MIT License**.
 
-A licença MIT permite o uso, a cópia, a modificação, a distribuição e a comercialização do software, inclusive em projetos derivados de código fechado, respeitando os termos da licença e os direitos de terceiros.
+The MIT License permits the use, copying, modification, distribution, and commercialization of the software, including in closed-source derivative projects, subject to the license terms and third-party rights.
 
-Consulte o arquivo [LICENSE](LICENSE) para obter os termos completos.
+See the [LICENSE](LICENSE) file for the complete terms.
 
-Este projeto é independente e não possui afiliação oficial, associação comercial ou endosso da Webzen. Todas as referências à Webzen e ao MU Online são utilizadas exclusivamente para identificação da origem e do contexto técnico do projeto.
+This project is independent and has no official affiliation with, commercial association with, or endorsement by Webzen. All references to Webzen and MU Online are used exclusively to identify the project's origin and technical context.
 
 ---
 
 **MuOnline-Main-Source**  
 Open Development · AI-Assisted Engineering · Academic Research
 
-**Desenvolvido e mantido por Qubit - SysQuantixCore**
+**Developed and maintained by Qubit - SysQuantixCore**
 
 Release (c) 2026 Qubit - SysQuantixCore
