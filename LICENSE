@@ -1,8 +1,4 @@
-# MIT License (English-US)
-
-Copyright (c) 2023 ProjectRebirthMu
-
-Copyright (c) 2026 Qubit - SysQuantixCore
+MIT License (English-US)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,11 +19,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
-# MIT License (Português-BR)
+------------------------------------------------------------
 
-Direitos autorais (c) 2023 ProjectRebirthMu
-
-Direitos autorais (c) 2026 Qubit - SysQuantixCore
+MIT License (Português-BR)
 
 Por meio desta, é concedida permissão, gratuitamente, a qualquer pessoa que obtenha uma cópia
 deste software e dos arquivos de documentação associados (o "Software"), para lidar
@@ -48,14 +42,12 @@ OUTRA FORMA, DECORRENTE DE, FORA OU EM CONEXÃO COM O SOFTWARE OU O USO OU
 OUTRAS AÇÕES NO SOFTWARE.
 
 
-# Licencia MIT (Spanish-ES)
+------------------------------------------------------------
 
-Derechos de autor (c) 2023 ProjectRebirthMu
-
-Derechos de autor (c) 2026 Qubit - SysQuantixCore
+Licencia MIT (Spanish-ES)
 
 Por la presente se concede permiso, de forma gratuita, a cualquier persona que obtenga una copia
-de este software y archivos de documentación asociados (el "Software"), para utilizar
+de este software y los archivos de documentación asociados (el "Software"), para utilizar
 el Software sin restricciones, incluyendo, entre otras, los derechos
 de usar, copiar, modificar, fusionar, publicar, distribuir, sublicenciar y/o vender
 copias del Software, y permitir a las personas a las que se les proporcione el Software
@@ -71,3 +63,45 @@ SERÁN RESPONSABLES DE NINGUNA RECLAMACIÓN, DAÑOS U OTRA
 RESPONSABILIDAD, YA SEA EN UNA ACCIÓN DE CONTRATO, AGRAVIO O DE OTRA MANERA, DERIVADA DE,
 FUERA DE O EN CONEXIÓN CON EL SOFTWARE O EL USO U OTRAS ACCIONES EN EL
 SOFTWARE.
+
+
+------------------------------------------------------------
+
+PROJECT DEVELOPMENT AND AI ATTRIBUTION
+
+Project: Main
+Maintainer: Qubit
+Organization: SysQuantixCore
+Development Year: 2026
+
+This project supports open software development, academic research,
+independent developers, and responsible AI-assisted programming.
+
+AI-assisted development tools may be used for code generation, debugging,
+optimization, refactoring, documentation, testing, and technical research.
+
+Contributors are encouraged to disclose substantial AI-assisted contributions
+and remain responsible for reviewing, validating, testing, and verifying
+the code they submit.
+
+Students, academic researchers, educational institutions, and independent
+developers are welcome to study, experiment with, modify, and develop
+derivative projects in accordance with the applicable license terms.
+
+AI-generated contributions do not automatically establish copyright ownership
+or guarantee originality. Contributors must respect third-party intellectual
+property rights, software licenses, and applicable academic integrity rules.
+
+This development statement is informational and does not modify, replace,
+or impose additional restrictions on the permissions granted by the MIT License.
+
+For development guidelines, see AI-DEVELOPMENT-POLICY.md.
+
+------------------------------------------------------------
+
+Main.exe (5.2 | 6.3)
+Open Development | AI-Assisted Engineering | Academic Research
+Independent Software Development
+
+Release (c) 2023 ProjectRebirthMu
+Release (c) 2026 Qubit - SysQuantixCore
