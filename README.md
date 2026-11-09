@@ -1,93 +1,167 @@
-# Repositório Git - MuOnline Main.exe
+# MuOnline Main.exe
 
-Este repositório Git contém a versão aprimorada da Main.exe do MuOnline, baseada na source 5.2, com correções e melhorias para a versão 6.3.
+[![C++](https://img.shields.io/badge/C%2B%2B-Source%20Code-00599C?logo=cplusplus&logoColor=white)](https://isocpp.org/)
+[![Visual Studio](https://img.shields.io/badge/Visual%20Studio-Development-5C2D91?logo=visualstudio&logoColor=white)](https://visualstudio.microsoft.com/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![AI Development](https://img.shields.io/badge/AI--Assisted-Development-blue.svg)](AI-DEVELOPMENT-POLICY.md)
 
-## Descrição
+[English](README.md) | [Português-BR](README.BRASIL.md)
 
-A Main.exe é um componente essencial do MuOnline, responsável por executar o cliente do jogo e coordenar a interação entre os jogadores e o servidor. Esta versão específica da Main.exe foi desenvolvida com base na source 5.2 do MuOnline e foi aprimorada para oferecer correções de bugs e melhorias da Season 6.
+**Uma versão aprimorada do código-fonte da Main.exe do MU Online, baseada na source 5.2, com correções, otimizações e adaptações para a Season 6.3.**
 
-## Recursos e Aprimoramentos
+Este projeto tem como objetivo aprimorar a estabilidade, o desempenho, a compatibilidade e a estrutura do cliente MU Online, oferecendo uma base de desenvolvimento para pesquisadores, estudantes e desenvolvedores independentes.
 
-- Correções de bugs: Identificamos e corrigimos diversos bugs presentes na versão original da Main.exe, proporcionando uma experiência de jogo mais estável e livre de problemas.
-- Melhorias de desempenho: Otimizamos o código para melhorar o desempenho da Main.exe, reduzindo o consumo de recursos e aumentando a fluidez do jogo.
-- Compatibilidade com a versão 6.3: Realizamos as adaptações necessárias para garantir a compatibilidade da Main.exe com a versão 6.3 do MuOnline, incluindo a adição de recursos específicos dessa versão.
-- Novos recursos: Introduzimos novos recursos e funcionalidades na Main.exe para melhorar a jogabilidade e enriquecer a experiência dos jogadores.
-- Documentação: Incluímos uma documentação detalhada para auxiliar os desenvolvedores na compreensão do código-fonte e na realização de modificações personalizadas.
+---
 
-## Requisitos
+## 📋 Descrição
 
-Certifique-se de ter os seguintes requisitos antes de prosseguir:
+A Main.exe é um componente essencial do cliente MU Online, responsável pela execução do jogo, gerenciamento dos recursos gráficos e interação entre o cliente e o servidor.
 
+Esta versão utiliza como base a source 5.2 do MU Online e incorpora correções e melhorias direcionadas à compatibilidade com a Season 6.3.
+
+O projeto também busca oferecer uma estrutura organizada para análise técnica, manutenção, otimização e desenvolvimento de novas funcionalidades.
+
+## ✨ Recursos e Aprimoramentos
+
+- **Correções de bugs:** identificação e correção de problemas presentes na implementação original.
+- **Otimização de desempenho:** melhorias no código para reduzir o consumo de recursos e proporcionar maior estabilidade e fluidez.
+- **Compatibilidade Season 6.3:** adaptações e integração de funcionalidades relacionadas à versão 6.3.
+- **Novos recursos:** implementação e aprimoramento de funcionalidades do cliente.
+- **Estabilidade:** melhorias na execução e no gerenciamento de recursos.
+- **Manutenibilidade:** organização e aprimoramento da estrutura do código-fonte.
+- **Documentação:** informações técnicas para auxiliar na compreensão, manutenção e personalização do projeto.
+- **Desenvolvimento assistido por IA:** utilização responsável de ferramentas de inteligência artificial para análise, depuração, otimização e documentação do código.
+
+## 🛠️ Tecnologias e Ferramentas
+
+| Tecnologia | Aplicação |
+|---|---|
+| **C/C++** | Desenvolvimento do cliente |
+| **Visual Studio** | Ambiente de desenvolvimento e compilação |
+| **Microsoft SQL Server** | Infraestrutura de banco de dados do servidor |
+| **Windows SDK** | Recursos e APIs do sistema operacional |
+| **Git** | Controle de versão |
+
+## 📦 Requisitos
+
+Antes de iniciar o desenvolvimento, verifique os seguintes requisitos:
+
+- [Microsoft Visual Studio](https://visualstudio.microsoft.com/pt-br/downloads/)
 - [Microsoft SQL Server](https://www.microsoft.com/pt-br/sql-server/sql-server-downloads)
-- [Visual Studio](https://visualstudio.microsoft.com/pt-br/downloads)
-- [Source Server](https://github.com/ProjectRebirthMu/Server)
+- [Source Server - ProjectRebirthMu](https://github.com/ProjectRebirthMu/Server)
+- Git para gerenciamento do código-fonte.
 
-## Instalação
+Os componentes necessários do Visual Studio e do Windows SDK dependem da configuração original da solução.
 
-1. Clone este repositório em seu ambiente de desenvolvimento local:
+## 🚀 Instalação
 
-1. Clone este repositório para sua máquina local:
+### 1. Clonar o repositório
 
-   ```bash
-   git clone https://github.com/ProjectRebirthMu/Main
-   ```
+```bash
+git clone https://github.com/SysQuantixCore/MuOnline-Main-Source.git
+```
 
-2. Certifique-se de ter as ferramentas e dependências necessárias instaladas para compilar o código-fonte da Main.exe.
+### 2. Preparar o ambiente
 
-3. Compile o código-fonte para gerar o executável da Main.exe.
+Instale as ferramentas e dependências necessárias para abrir e compilar a solução no Visual Studio.
 
-4. Copie o executável gerado para o diretório adequado do seu servidor de MuOnline.
+### 3. Abrir o projeto
 
-5. Execute o servidor e verifique se a Main.exe está funcionando corretamente.
+Abra a solução da Main.exe no Visual Studio e verifique as configurações de compilação, plataforma e dependências.
 
-## Contribuição
+### 4. Compilar o código-fonte
 
-Se você deseja contribuir para este projeto, siga as etapas abaixo:
+Selecione a configuração desejada e compile a solução para gerar o executável Main.exe.
 
-1. Faça um fork deste repositório e clone-o em seu ambiente local.
+### 5. Validar a implementação
 
-2. Crie uma nova branch para suas modificações:
+Execute testes para verificar o funcionamento, a compatibilidade, a estabilidade e o desempenho do cliente.
+
+## 🤝 Contribuição
+
+Contribuições de desenvolvedores independentes, estudantes e pesquisadores são bem-vindas.
+
+Para contribuir:
+
+1. Faça um fork deste repositório.
+2. Clone o projeto em seu ambiente local.
+3. Crie uma branch para suas modificações:
 
 ```bash
 git checkout -b minha-branch
 ```
 
-3. Faça as modificações necessárias e adicione os novos recursos.
-
-4. Teste as alterações para garantir que tudo esteja funcionando corretamente.
-
-5. Commit suas alterações:
+4. Desenvolva suas alterações e implemente as melhorias necessárias.
+5. Teste e valide as modificações.
+6. Registre suas alterações:
 
 ```bash
-git commit -m "Minhas modificações"
+git add .
+git commit -m "Descrição das modificações"
 ```
-   
-6. Faça push para o repositório remoto:
+
+7. Envie sua branch:
 
 ```bash
 git push origin minha-branch
 ```
 
-7. Crie um novo pull request neste repositório.
+8. Abra um Pull Request para análise.
 
+Consulte o arquivo `CONTRIBUTING.md`, quando disponível, para conhecer as diretrizes de colaboração.
 
-## Postagem Oficial do Fórum
+## 🤖 Desenvolvimento Assistido por Inteligência Artificial
 
-Confira a postagem oficial do fórum no tópico [TuServerMu](https://tuservermu.com.ve/index.php?topic=57374.msg294187#msg294187) para obter mais informações e discussões relacionadas.
+O projeto permite o uso responsável de ferramentas de Inteligência Artificial como apoio ao desenvolvimento de software.
 
-Créditos:
-- [Webzen](https://en.wikipedia.org/wiki/Webzen)
+São aceitas aplicações de IA para:
+
+- Análise e compreensão do código-fonte.
+- Identificação e correção de bugs.
+- Otimização e refatoração de código C/C++.
+- Pesquisa e experimentação acadêmica.
+- Desenvolvimento de testes e documentação.
+- Estudos de compatibilidade e desempenho.
+
+Os colaboradores permanecem responsáveis pela revisão humana, validação técnica, segurança e procedência das contribuições.
+
+Consulte [AI-DEVELOPMENT-POLICY.md](AI-DEVELOPMENT-POLICY.md) para obter as diretrizes completas.
+
+## 📚 Postagem Oficial do Fórum
+
+Consulte a publicação original no fórum:
+
+[TuServerMu - Discussão e informações do projeto](https://tuservermu.com.ve/index.php?topic=57374.msg294187#msg294187)
+
+## 👥 Créditos e Agradecimentos
+
+Este projeto reconhece as contribuições históricas e os trabalhos relacionados à evolução do código-fonte.
+
+- [Webzen](https://en.wikipedia.org/wiki/Webzen) — origem e desenvolvimento do MU Online.
 - [louis](https://tuservermu.com.ve/index.php?action=profile;u=4199)
 - [OgoCx](https://tuservermu.com.ve/index.php?action=profile;u=8220)
-- [myheart](https://tuservermu.com.ve/index.php?action=profile;u=10705) (Cashshop files)
+- [myheart](https://tuservermu.com.ve/index.php?action=profile;u=10705) — arquivos CashShop.
 - [kayito](https://tuservermu.com.ve/index.php?action=profile;u=5033)
-- [takumi12](https://tuservermu.com.ve/index.php?action=profile;u=16349) (MuHelper + Right Click)
-- [Qubit](https://tuservermu.com.ve/index.php?action=profile;u=36306) (Discord: Qubit#4783)
+- [takumi12](https://tuservermu.com.ve/index.php?action=profile;u=16349) — MuHelper e Right Click.
+- [Qubit](https://tuservermu.com.ve/index.php?action=profile;u=36306) — desenvolvimento, melhorias e manutenção.
 
-## Licença
+**Organização:** [SysQuantixCore](https://github.com/SysQuantixCore)
 
-Direitos Autorais (c) 2023. ProjectRebirth & ProjectRebirthMu
+## 📄 Licença
 
-Este projeto é um código aberto e não possui nenhuma relação com a Webzen. Qualquer referência à Webzen no código, nos arquivos ou nos créditos é meramente informativa e não implica em afiliação ou endosso.
+Este projeto é distribuído sob os termos da **MIT License**.
 
-[MIT License](LICENSE). Consulte o arquivo LICENSE para obter mais informações.
+A licença MIT permite o uso, a cópia, a modificação, a distribuição e a comercialização do software, inclusive em projetos derivados de código fechado, respeitando os termos da licença e os direitos de terceiros.
+
+Consulte o arquivo [LICENSE](LICENSE) para obter os termos completos.
+
+Este projeto é independente e não possui afiliação oficial, associação comercial ou endosso da Webzen. Todas as referências à Webzen e ao MU Online são utilizadas exclusivamente para identificação da origem e do contexto técnico do projeto.
+
+---
+
+**MuOnline-Main-Source**  
+Open Development · AI-Assisted Engineering · Academic Research
+
+**Desenvolvido e mantido por Qubit - SysQuantixCore**
+
+Release (c) 2026 Qubit - SysQuantixCore
