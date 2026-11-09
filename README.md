@@ -61,7 +61,7 @@ The Visual Studio and Windows SDK components required depend on the solution's o
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/SysQuantixCore/MuOnline-Main-Source.git
+  git clone https://github.com/SysQuantixCore/Main.git
 ```
 
 ### 2. Set up the environment
