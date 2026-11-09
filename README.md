@@ -6,6 +6,7 @@
 [![Visual Studio](https://img.shields.io/badge/Visual%20Studio-Development-5C2D91?logo=visualstudio&logoColor=white)](https://visualstudio.microsoft.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![AI Development](https://img.shields.io/badge/AI--Assisted-Development-blue.svg)](AI-DEVELOPMENT-POLICY.md)
+[![Latest Release](https://img.shields.io/badge/Release-v2.0.0.0-blue?logo=github)](https://github.com/SysQuantixCore/Server/releases/tag/v2.0.0.0)
 
 [English](README.md) | [Português-BR](README.BRASIL.md)
 
@@ -125,6 +126,13 @@ Contributors remain responsible for human review, technical validation, security
 
 See [AI-DEVELOPMENT-POLICY.md](AI-DEVELOPMENT-POLICY.md) for the complete guidelines.
 
+**Release information:**
+
+- **Version:** 2.0.0.0
+- **Tag:** `v2.0.0.0`
+- **Package:** `Server_Release 2.0.0.0.zip`
+- **Format:** ZIP Archive
+
 ## 📚 Official Forum Post
 
 See the original forum post:
@@ -144,6 +152,12 @@ This project acknowledges the historical contributions and work related to the e
 - [Qubit](https://tuservermu.com.ve/index.php?action=profile;u=36306) — development, improvements, and maintenance.
 
 **Organization:** [SysQuantixCore](https://github.com/SysQuantixCore)
+
+## 📦 Latest Release
+
+<badge color="success">Latest Version: v2.0.0.0</badge>
+
+[![GitHub Release](https://img.shields.io/badge/GitHub-View%20All%20Releases-181717?style=flat&logo=github&logoColor=white)](https://github.com/SysQuantixCore/Main/releases/tag/v2.0.0.0)
 
 ## 📄 License
 
