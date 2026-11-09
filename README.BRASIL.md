@@ -134,7 +134,7 @@ Consulte [AI-DEVELOPMENT-POLICY.md](AI-DEVELOPMENT-POLICY.md) para obter as dire
 - **Tag:** `v2.0.0.0`
 - **Package:** `Main_Release.zip`
 - **Format:** ZIP Archive
-- 
+  
 ## 📚 Postagem Oficial do Fórum
 
 Consulte a publicação original no fórum:
