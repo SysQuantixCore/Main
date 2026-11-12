@@ -10,7 +10,7 @@
 #include "CGMJewelOfAction.h"
 #include "CGMPhysicsManager.h"
 #include "CGMRenderGroupMesh.h"
-#include "..\\..\\Util\\CCRC32.H"
+#include "..\\dependencies\\include\Util\\CCRC32.H"
 
 #include <tlhelp32.h>
 #include <intrin.h>

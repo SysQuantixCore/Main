@@ -1318,7 +1318,7 @@
     <ClCompile Include="CGMInvasionManager.cpp">
       <Filter>MU\Client\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Util\CCRC32.Cpp">
+    <ClCompile Include="..\dependencies\include\Util\CCRC32.Cpp">
       <Filter>MU\Client\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CGMFontLayer.cpp">
@@ -1407,6 +1407,9 @@
     </ClCompile>
     <ClCompile Include="CB_DangKyInGame.cpp">
       <Filter>MU\Client\CBCustom</Filter>
+    </ClCompile>
+    <ClCompile Include="SystemCompatibility.cpp">
+      <Filter>MU\Client\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -2625,7 +2628,7 @@
     <ClInclude Include="CGMInvasionManager.h">
       <Filter>MU\Client\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Util\CCRC32.H">
+    <ClInclude Include="..\dependencies\include\Util\CCRC32.H">
       <Filter>MU\Client\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CGMFontLayer.h">
@@ -2720,6 +2723,9 @@
     </ClInclude>
     <ClInclude Include="CB_DangKyInGame.h">
       <Filter>MU\Client\CBCustom</Filter>
+    </ClInclude>
+    <ClInclude Include="SystemCompatibility.h">
+      <Filter>MU\Client\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

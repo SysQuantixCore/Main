@@ -50,14 +50,14 @@
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <ExecutablePath>$(VC_ExecutablePath_x86);$(CommonExecutablePath)</ExecutablePath>
-    <OutDir>..\Compiled</OutDir>
+    <OutDir>$(SolutionDir)Release</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <ExecutablePath>$(VC_ExecutablePath_x86);$(CommonExecutablePath)</ExecutablePath>
-    <OutDir>C:\MAIN 5.2\Source\Main5.2\Debug</OutDir>
+    <OutDir>$(SolutionDir)Debug</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Midl>
@@ -201,7 +201,7 @@
     <ResourceCompile Include="resource.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Util\CCRC32.Cpp" />
+    <ClCompile Include="..\dependencies\include\Util\CCRC32.Cpp" />
     <ClCompile Include="..\dependencies\ImGui\backends\imgui_impl_opengl2.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
@@ -673,7 +673,7 @@
     <ClCompile Include="_GlobalFunctions.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Util\CCRC32.H" />
+    <ClInclude Include="..\dependencies\include\Util\CCRC32.H" />
     <ClInclude Include="..\dependencies\ImGui\imconfig.h" />
     <ClInclude Include="..\dependencies\ImGui\imgui.h" />
     <ClInclude Include="..\dependencies\ImGui\imgui_internal.h" />
