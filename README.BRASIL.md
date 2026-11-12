@@ -128,6 +128,13 @@ Os colaboradores permanecem responsáveis pela revisão humana, validação téc
 
 Consulte [AI-DEVELOPMENT-POLICY.md](AI-DEVELOPMENT-POLICY.md) para obter as diretrizes completas.
 
+**Release information:**
+
+- **Version:** 2.0.0.0
+- **Tag:** `v2.0.0.0`
+- **Package:** `Main_Release.zip`
+- **Format:** ZIP Archive
+  
 ## 📚 Postagem Oficial do Fórum
 
 Consulte a publicação original no fórum:
@@ -147,6 +154,12 @@ Este projeto reconhece as contribuições históricas e os trabalhos relacionado
 - [Qubit](https://tuservermu.com.ve/index.php?action=profile;u=36306) — desenvolvimento, melhorias e manutenção.
 
 **Organização:** [SysQuantixCore](https://github.com/SysQuantixCore)
+
+## 📦 Último Lançamento
+
+<badge color="success">Versão mais recente: v2.0.0.0</badge>
+
+[![GitHub Release](https://img.shields.io/badge/GitHub-View%20All%20Releases-181717?style=flat&logo=github&logoColor=white)](https://github.com/SysQuantixCore/Main/releases/tag/2.0.0.0)
 
 ## 📄 Licença
 

@@ -6,6 +6,7 @@
 [![Visual Studio](https://img.shields.io/badge/Visual%20Studio-Development-5C2D91?logo=visualstudio&logoColor=white)](https://visualstudio.microsoft.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![AI Development](https://img.shields.io/badge/AI--Assisted-Development-blue.svg)](AI-DEVELOPMENT-POLICY.md)
+[![Latest Release](https://img.shields.io/badge/Release-v2.0.0.0-blue?logo=github)](https://github.com/SysQuantixCore/Server/releases/tag/v2.0.0.0)
 
 [English](README.md) | [Português-BR](README.BRASIL.md)
 
@@ -60,7 +61,7 @@ The Visual Studio and Windows SDK components required depend on the solution's o
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/SysQuantixCore/MuOnline-Main-Source.git
+  git clone https://github.com/SysQuantixCore/Main.git
 ```
 
 ### 2. Set up the environment
@@ -108,10 +109,6 @@ git commit -m "Description of changes"
 git push origin my-branch
 ```
 
-8. Open a Pull Request for review.
-
-Refer to the `CONTRIBUTING.md` file, when available, for collaboration guidelines.
-
 ## 🤖 AI-Assisted Development
 
 The project allows the responsible use of Artificial Intelligence tools to support software development.
@@ -128,6 +125,13 @@ AI applications are accepted for:
 Contributors remain responsible for human review, technical validation, security, and the provenance of their contributions.
 
 See [AI-DEVELOPMENT-POLICY.md](AI-DEVELOPMENT-POLICY.md) for the complete guidelines.
+
+**Release information:**
+
+- **Version:** 2.0.0.0
+- **Tag:** `v2.0.0.0`
+- **Package:** `Main_Release.zip`
+- **Format:** ZIP Archive
 
 ## 📚 Official Forum Post
 
@@ -148,6 +152,12 @@ This project acknowledges the historical contributions and work related to the e
 - [Qubit](https://tuservermu.com.ve/index.php?action=profile;u=36306) — development, improvements, and maintenance.
 
 **Organization:** [SysQuantixCore](https://github.com/SysQuantixCore)
+
+## 📦 Latest Release
+
+<badge color="success">Latest Version: v2.0.0.0</badge>
+
+[![GitHub Release](https://img.shields.io/badge/GitHub-View%20All%20Releases-181717?style=flat&logo=github&logoColor=white)](https://github.com/SysQuantixCore/Main/releases/tag/2.0.0.0)
 
 ## 📄 License
 
