@@ -126,8 +126,6 @@ São aceitas aplicações de IA para:
 
 Os colaboradores permanecem responsáveis pela revisão humana, validação técnica, segurança e procedência das contribuições.
 
-Consulte [AI-DEVELOPMENT-POLICY.md](AI-DEVELOPMENT-POLICY.md) para obter as diretrizes completas.
-
 **Release information:**
 
 - **Version:** 2.0.0.0
