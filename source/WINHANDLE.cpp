@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "gfx/GfxConfig.h"
 #include "resource.h"
 #include "ThemidaSDK.h"
 
@@ -501,7 +502,10 @@ LONG CWINHANDLE::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 #endif // IMPLEMENT_IMGUI_WIN32
 
 #ifdef SHUTDOWN_SCALEFORM_INFO
-	if (SceneFlag == LOG_IN_SCENE || SceneFlag == CHARACTER_SCENE || SceneFlag == MAIN_SCENE)
+	// A ScaleForm.dll usa OpenGL fixed-function e nao funciona em core
+	// profile (renderer moderno).
+	if (!gfx::Config::Instance().GetCoreProfile() &&
+		(SceneFlag == LOG_IN_SCENE || SceneFlag == CHARACTER_SCENE || SceneFlag == MAIN_SCENE))
 	{
 		gfxinit->CallBack(hwnd, msg, wParam, lParam);
 	}

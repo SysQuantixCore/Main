@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "CComGem.h"
 #include "UIControls.h"
+#include "gfx/GfxTrace.h"
 #include "UIWindows.h"
 #include "ZzzOpenglUtil.h"
 #include "ZzzTexture.h"
@@ -1504,7 +1505,7 @@ BOOL CUISimpleChatListBox::RenderDataLine(int iLineNumber)
 	char Text[MAX_TEXT_LENGTH + 1] = { 0 };
 
 	SIZE TextSize = { 0, 0 };
-	// ÀÌ¸§
+	// ï¿½Ì¸ï¿½
 	if (m_TextListIter->m_szID[0] != NULL)
 	{
 		switch (m_TextListIter->m_iType)
@@ -1709,12 +1710,12 @@ void CUIChatPalListBox::RenderInterface()
 		if (MouseLButtonPush && ::CheckMouseIn(m_iPos_x + m_iWidth - 12, m_iPos_y - m_iHeight - 1, 13.0f, 13.0f) == TRUE)
 			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - 12, (float)m_iPos_y - m_iHeight - 1, 13.0f, 13.0f, 13.0f / 16.0f, 29.0f / 32.0f, -13.0f / 16.0f, -13.0f / 32.0f);
 		else
-			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - 12, (float)m_iPos_y - m_iHeight - 1, 13.0f, 13.0f, 0.0f, 3.0f / 32.0f, 13.0f / 16.0f, 13.0f / 32.0f);	// ¡ã
+			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - 12, (float)m_iPos_y - m_iHeight - 1, 13.0f, 13.0f, 0.0f, 3.0f / 32.0f, 13.0f / 16.0f, 13.0f / 32.0f);	// ï¿½ï¿½
 
 		if (MouseLButtonPush && ::CheckMouseIn(m_iPos_x + m_iWidth - 12, m_iPos_y - 12, 13.0f, 13.0f) == TRUE)
 			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - 12, (float)m_iPos_y - 12, 13.0f, 13.0f, 13.0f / 16.0f, 16.0f / 32.0f, -13.0f / 16.0f, -13.0f / 32.0f);
 		else
-			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - 12, (float)m_iPos_y - 12, 13.0f, 13.0f, 0.0f, 16.0f / 32.0f, 13.0f / 16.0f, 13.0f / 32.0f);	// ¡å
+			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - 12, (float)m_iPos_y - 12, 13.0f, 13.0f, 0.0f, 16.0f / 32.0f, 13.0f / 16.0f, 13.0f / 32.0f);	// ï¿½ï¿½
 
 		SetLineColor(2);
 		RenderColor((float)m_iPos_x + m_iWidth - m_fScrollBarWidth + 1, m_fScrollBarRange_top, (float)1, (float)m_fScrollBarRange_bottom - m_fScrollBarRange_top);
@@ -2378,7 +2379,7 @@ BOOL CUILetterTextListBox::RenderDataLine(int iLineNumber)
 {
 	EnableAlphaTest();
 	char Text[MAX_TEXT_LENGTH + 1] = { 0 };
-	// ³»¿ë
+	// ï¿½ï¿½ï¿½ï¿½
 	g_pRenderText->SetTextColor(230, 220, 200, 255);
 	g_pRenderText->SetBgColor(0, 0, 0, 0);
 
@@ -2848,11 +2849,11 @@ void CUIRenderTextOriginal::WriteText(int iOffset, int iWidth, int iHeight)
 				return;
 			}
 
-			if (*(m_pFontBuffer + SrcIndex) == 255)	// ±ÛÀÚ
+			if (*(m_pFontBuffer + SrcIndex) == 255)	// ï¿½ï¿½ï¿½ï¿½
 			{
 				*((unsigned int*)(buff + DstIndex)) = m_dwTextColor;
 			}
-			else									// ¹è°æ
+			else									// ï¿½ï¿½ï¿½
 			{
 				*((unsigned int*)(buff + DstIndex)) = 0;
 			}
@@ -2889,25 +2890,24 @@ void CUIRenderTextOriginal::UploadText(int sx, int sy, int Width, int Height, bo
 		Height = WindowHeight - sy;
 	}
 
-	if (Width > 0 && Height > 0 && sx + Width > 0 && sy + Height > 0)
+	// Ver comentario em CUITextInputBox::UploadText: o upload da textura
+	// inteira do atlas de fonte nao depende do recorte do desenho.
+	glBindTexture(GL_TEXTURE_2D, b->TextureNumber);
+	glTexImage2D(GL_TEXTURE_2D, 0, gfx::SizedInternalFormat(b->Components), (int)b->Width, (int)b->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, b->Buffer.data());
+
+	float TextureUWidth = (Width + 0.01f) / b->Width;
+	float TextureVHeight = (Height + 0.01f) / b->Height;
+
+	if (black_out)
 	{
-		glBindTexture(GL_TEXTURE_2D, b->TextureNumber);
-		glTexImage2D(GL_TEXTURE_2D, 0, b->Components, (int)b->Width, (int)b->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, b->Buffer.data());
+		GLfloat fCurColor[4];
 
-		float TextureUWidth = (Width + 0.01f) / b->Width;
-		float TextureVHeight = (Height + 0.01f) / b->Height;
-
-		if (black_out)
-		{
-			GLfloat fCurColor[4];
-
-			glGetFloatv(GL_CURRENT_COLOR, fCurColor);
-			glColor4f(0.0, 0.0, 0.0, 1.f);
-			RenderBitmap(BITMAP_FONT, (float)sx + 1.f, (float)sy + 1.f, (float)Width, (float)Height, TextureU, TextureV, TextureUWidth, TextureVHeight, false, false);
-			glColor4fv(fCurColor);
-		}
-		RenderBitmap(BITMAP_FONT, (float)sx, (float)sy, (float)Width, (float)Height, TextureU, TextureV, TextureUWidth, TextureVHeight, false, false);
+		glGetFloatv(GL_CURRENT_COLOR, fCurColor);
+		glColor4f(0.0, 0.0, 0.0, 1.f);
+		RenderBitmap(BITMAP_FONT, (float)sx + 1.f, (float)sy + 1.f, (float)Width, (float)Height, TextureU, TextureV, TextureUWidth, TextureVHeight, false, false);
+		glColor4fv(fCurColor);
 	}
+	RenderBitmap(BITMAP_FONT, (float)sx, (float)sy, (float)Width, (float)Height, TextureU, TextureV, TextureUWidth, TextureVHeight, false, false);
 }
 
 void CUIRenderTextOriginal::RenderText(int iPos_x, int iPos_y, const unicode::t_char* pszText, int iBoxWidth, int iBoxHeight, int iSort, OUT SIZE* lpTextSize, bool black_out)
@@ -3038,6 +3038,7 @@ void CUIRenderTextOriginal::RenderText(int iPos_x, int iPos_y, const unicode::t_
 
 	int iRealRenderWidth = RealRenderingSize.cx;
 	int iNumberOfSections = (RealRenderingSize.cx / LIMIT_WIDTH) + ((iRealRenderWidth % LIMIT_WIDTH >= 0) ? 1 : 0);
+
 	for (int i = 0; i < iNumberOfSections; i++)
 	{
 		SIZE RealSectionLine = { (long)LIMIT_WIDTH, (long)RealRenderingSize.cy };
@@ -3707,7 +3708,7 @@ void CUITextInputBox::GetText(wchar_t* pwszText, int iGetLenght)
 
 int CUITextInputBox::GetAsInt()
 {
-	char lpszCheck[256] = { 0 }; // Asegurar inicialización
+	char lpszCheck[256] = { 0 }; // Asegurar inicializaciï¿½n
 
 	this->GetText(lpszCheck, sizeof(lpszCheck)); // Obtener el texto en char
 
@@ -3721,7 +3722,7 @@ void CUITextInputBox::SetByteLimite(BYTE iLimit)
 
 bool CUITextInputBox::CheckLimiteRange(wchar_t Char)
 {
-	if (m_iLimitByte == 0xFF) // Sin límite de bytes
+	if (m_iLimitByte == 0xFF) // Sin lï¿½mite de bytes
 		return true;
 
 	char pszCheck[256] = { 0 };
@@ -3960,11 +3961,16 @@ void CUITextInputBox::UploadText(int sx, int sy, int Width, int Height)
 	{
 		Height = WindowHeight - sy;
 	}
+	// O upload sobe a textura INTEIRA do atlas de fonte (256x32). O recorte
+	// (sx/sy/Width/Height) afeta apenas o desenho, nao o conteudo da
+	// textura. Por isso o upload NAO pode ficar dentro do if de clip: caso
+	// contrario a textura deixaria de ser atualizada e a UI passaria a
+	// exibir o conteudo antigo (ou nenhum) do atlas.
+	glBindTexture(GL_TEXTURE_2D, b->TextureNumber);
+	glTexImage2D(GL_TEXTURE_2D, 0, gfx::SizedInternalFormat(b->Components), (int)b->Width, (int)b->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, b->Buffer.data());
+
 	if (Width > 0 && Height > 0 && sx + Width > 0 && sy + Height > 0)
 	{
-		glBindTexture(GL_TEXTURE_2D, b->TextureNumber);
-		glTexImage2D(GL_TEXTURE_2D, 0, b->Components, (int)b->Width, (int)b->Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, b->Buffer.data());
-
 		float TextureUWidth = (Width + 0.01f) / b->Width;
 		float TextureVHeight = (Height + 0.01f) / b->Height;
 		RenderBitmap(BITMAP_FONT, (float)sx, (float)sy, (float)Width, (float)Height, TextureU, TextureV, TextureUWidth, TextureVHeight, false, false);
@@ -4181,12 +4187,12 @@ void CUITextInputBox::RenderScrollbar()
 		if (MouseLButtonPush && ::CheckMouseIn(m_iPos_x + m_iWidth - m_fScrollBarWidth, m_iPos_y - 4, 13.0f, 13.0f) == TRUE)
 			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - m_fScrollBarWidth, (float)m_iPos_y - 4, 13.0f, 13.0f, 13.0f / 16.0f, 29.0f / 32.0f, -13.0f / 16.0f, -13.0f / 32.0f);
 		else
-			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - m_fScrollBarWidth, (float)m_iPos_y - 4, 13.0f, 13.0f, 0.0f, 3.0f / 32.0f, 13.0f / 16.0f, 13.0f / 32.0f);	// ¡ã
+			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - m_fScrollBarWidth, (float)m_iPos_y - 4, 13.0f, 13.0f, 0.0f, 3.0f / 32.0f, 13.0f / 16.0f, 13.0f / 32.0f);	// ï¿½ï¿½
 
 		if (MouseLButtonPush && ::CheckMouseIn(m_iPos_x + m_iWidth - m_fScrollBarWidth, m_iPos_y + m_iHeight - 9, 13.0f, 13.0f) == TRUE)
 			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - m_fScrollBarWidth, (float)m_iPos_y + m_iHeight - 9, 13.0f, 13.0f, 13.0f / 16.0f, 16.0f / 32.0f, -13.0f / 16.0f, -13.0f / 32.0f);
 		else
-			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - m_fScrollBarWidth, (float)m_iPos_y + m_iHeight - 9, 13.0f, 13.0f, 0.0f, 16.0f / 32.0f, 13.0f / 16.0f, 13.0f / 32.0f);	// ¡å
+			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - m_fScrollBarWidth, (float)m_iPos_y + m_iHeight - 9, 13.0f, 13.0f, 0.0f, 16.0f / 32.0f, 13.0f / 16.0f, 13.0f / 32.0f);	// ï¿½ï¿½
 
 		EnableAlphaTest();
 		SetLineColor(2);
@@ -5183,12 +5189,12 @@ void CUIGuildNoticeListBox::RenderInterface()
 		if (MouseLButtonPush && ::CheckMouseIn(m_iPos_x + m_iWidth - 12, m_iPos_y - m_iHeight - 1, 13.0f, 13.0f) == TRUE)
 			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - 12, (float)m_iPos_y - m_iHeight - 1, 13.0f, 13.0f, 13.0f / 16.0f, 29.0f / 32.0f, -13.0f / 16.0f, -13.0f / 32.0f);
 		else
-			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - 12, (float)m_iPos_y - m_iHeight - 1, 13.0f, 13.0f, 0.0f, 3.0f / 32.0f, 13.0f / 16.0f, 13.0f / 32.0f);	// ¡ã
+			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - 12, (float)m_iPos_y - m_iHeight - 1, 13.0f, 13.0f, 0.0f, 3.0f / 32.0f, 13.0f / 16.0f, 13.0f / 32.0f);	// ï¿½ï¿½
 
 		if (MouseLButtonPush && ::CheckMouseIn(m_iPos_x + m_iWidth - 12, m_iPos_y - 12, 13.0f, 13.0f) == TRUE)
 			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - 12, (float)m_iPos_y - 12, 13.0f, 13.0f, 13.0f / 16.0f, 16.0f / 32.0f, -13.0f / 16.0f, -13.0f / 32.0f);
 		else
-			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - 12, (float)m_iPos_y - 12, 13.0f, 13.0f, 0.0f, 16.0f / 32.0f, 13.0f / 16.0f, 13.0f / 32.0f);	// ¡å
+			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - 12, (float)m_iPos_y - 12, 13.0f, 13.0f, 0.0f, 16.0f / 32.0f, 13.0f / 16.0f, 13.0f / 32.0f);	// ï¿½ï¿½
 
 		EnableAlphaTest();
 		SetLineColor(2);
@@ -5351,12 +5357,12 @@ void CUINewGuildMemberListBox::RenderInterface()
 		if (MouseLButtonPush && ::CheckMouseIn(m_iPos_x + m_iWidth - 12, m_iPos_y - m_iHeight - 1, 13.0f, 13.0f) == TRUE)
 			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - 12, (float)m_iPos_y - m_iHeight - 1, 13.0f, 13.0f, 13.0f / 16.0f, 29.0f / 32.0f, -13.0f / 16.0f, -13.0f / 32.0f);
 		else
-			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - 12, (float)m_iPos_y - m_iHeight - 1, 13.0f, 13.0f, 0.0f, 3.0f / 32.0f, 13.0f / 16.0f, 13.0f / 32.0f);	// ¡ã
+			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - 12, (float)m_iPos_y - m_iHeight - 1, 13.0f, 13.0f, 0.0f, 3.0f / 32.0f, 13.0f / 16.0f, 13.0f / 32.0f);	// ï¿½ï¿½
 
 		if (MouseLButtonPush && ::CheckMouseIn(m_iPos_x + m_iWidth - 12, m_iPos_y - 12, 13.0f, 13.0f) == TRUE)
 			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - 12, (float)m_iPos_y - 12, 13.0f, 13.0f, 13.0f / 16.0f, 16.0f / 32.0f, -13.0f / 16.0f, -13.0f / 32.0f);
 		else
-			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - 12, (float)m_iPos_y - 12, 13.0f, 13.0f, 0.0f, 16.0f / 32.0f, 13.0f / 16.0f, 13.0f / 32.0f);	// ¡å
+			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - 12, (float)m_iPos_y - 12, 13.0f, 13.0f, 0.0f, 16.0f / 32.0f, 13.0f / 16.0f, 13.0f / 32.0f);	// ï¿½ï¿½
 
 		EnableAlphaTest();
 		SetLineColor(2);
@@ -5569,14 +5575,14 @@ void CUIUnionGuildListBox::RenderInterface()
 				13.0f, 13.0f, 13.0f / 16.0f, 29.0f / 32.0f, -13.0f / 16.0f, -13.0f / 32.0f);
 		else
 			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - 12, (float)m_iPos_y - m_iHeight - 1,
-				13.0f, 13.0f, 0.0f, 3.0f / 32.0f, 13.0f / 16.0f, 13.0f / 32.0f);	// ¡ã
+				13.0f, 13.0f, 0.0f, 3.0f / 32.0f, 13.0f / 16.0f, 13.0f / 32.0f);	// ï¿½ï¿½
 
 		if (MouseLButtonPush && ::CheckMouseIn(m_iPos_x + m_iWidth - 12, m_iPos_y - 12, 13.0f, 13.0f) == TRUE)
 			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - 12, (float)m_iPos_y - 12,
 				13.0f, 13.0f, 13.0f / 16.0f, 16.0f / 32.0f, -13.0f / 16.0f, -13.0f / 32.0f);
 		else
 			RenderBitmap(BITMAP_INTERFACE_EX + 12, (float)m_iPos_x + m_iWidth - 12, (float)m_iPos_y - 12,
-				13.0f, 13.0f, 0.0f, 16.0f / 32.0f, 13.0f / 16.0f, 13.0f / 32.0f);	// ¡å
+				13.0f, 13.0f, 0.0f, 16.0f / 32.0f, 13.0f / 16.0f, 13.0f / 32.0f);	// ï¿½ï¿½
 
 		EnableAlphaTest();
 		SetLineColor(2);

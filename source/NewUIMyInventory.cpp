@@ -3015,7 +3015,7 @@ bool SEASON3B::CNewUIMyInventory::InventoryProcess()
 			}
 		}
 	}
-	else if (success && GetRepairMode() == REPAIR_MODE_OFF && SEASON3B::IsPress(VK_RBUTTON))
+	else if (success && GetRepairMode() == REPAIR_MODE_OFF && SEASON3B::IsPress(VK_LBUTTON))
 	{
 		ResetMouseRButton();
 
@@ -3436,7 +3436,7 @@ bool SEASON3B::CNewUIMyInventory::InventoryProcess()
 	}
 	else
 	{
-		if (success && GetRepairMode() == REPAIR_MODE_ON && SEASON3B::IsPress(VK_LBUTTON))
+		if (success && GetRepairMode() == REPAIR_MODE_ON && SEASON3B::IsPress(VK_RBUTTON))
 		{
 			int InvenIndex = -1;
 

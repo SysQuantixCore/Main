@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "gfx/GfxImGui.h"
 #include "MonkSystem.h"
 #include "UIControls.h"
 #include "DSPlaySound.h"
@@ -684,7 +685,7 @@ void CGMRenderGroupMesh::runtime_make_interface()
 
 	SEASON3B::RenderLocalItem3D(RenderFrameX + 44.f, RenderFrameY + 108.f, 84.f, 117.f, (&edit_mesh)->Index, (item_level << 3));
 
-	ImGui_ImplOpenGL2_NewFrame();
+	gfx::ImGuiBridge::NewFrame();
 	ImGui_ImplWin32_NewFrame();
 
 	ImGui::NewFrame();
@@ -701,7 +702,7 @@ void CGMRenderGroupMesh::runtime_make_interface()
 
 	ImGui::Render();
 
-	ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+	gfx::ImGuiBridge::RenderDrawData(ImGui::GetDrawData());
 }
 
 void CGMRenderGroupMesh::runtime_make_text(float RenderFrameX, float RenderFrameY)

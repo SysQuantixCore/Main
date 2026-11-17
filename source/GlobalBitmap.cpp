@@ -11,6 +11,7 @@
 #include "GlobalBitmap.h"
 #include "./Utilities/Log/ErrorReport.h"
 #include "./Utilities/Log/muConsoleDebug.h"
+#include "gfx/GfxTrace.h"
 
 CBitmapCache::CBitmapCache()
 {
@@ -846,6 +847,11 @@ void CGlobalBitmap::CreateMipmappedTexture(GLuint* TextureNumber, GLuint Compone
 {
 	GLenum format = (Components == 4) ? GL_RGBA : GL_RGB;
 
+	// Core profile (3.2+) exige internal format "sized". O motor legado
+	// usava GL_RGB (3) / GL_RGBA (4), que geram GL_INVALID_ENUM em core
+	// profile e deixam a textura incompleta.
+	const GLenum internalFormat = gfx::SizedInternalFormat(Components);
+
 	glGenTextures(1, TextureNumber);
 
 	glBindTexture(GL_TEXTURE_2D,*TextureNumber);
@@ -854,7 +860,7 @@ void CGlobalBitmap::CreateMipmappedTexture(GLuint* TextureNumber, GLuint Compone
 
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, Components, Width, Height, 0, format, GL_UNSIGNED_BYTE, textureBuff);
+	glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, Width, Height, 0, format, GL_UNSIGNED_BYTE, textureBuff);
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
@@ -921,6 +927,7 @@ void CGlobalBitmap::CreateMipmappedTexture(GLuint* TextureNumber, GLuint Compone
 #endif // ANISOTROPY_FUNCTIONAL
 
 	glBindTexture(GL_TEXTURE_2D, 0);
+
 }
 
 void CGlobalBitmap::SplitFileName(IN const std::string& filepath, OUT std::string& filename, bool bIncludeExt)

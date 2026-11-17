@@ -329,8 +329,8 @@ bool CheckAbuseNameFilter(char* Text)
 bool CheckName()
 {
 	if (CheckAbuseNameFilter(InputText[0]) || CheckAbuseFilter(InputText[0]) ||
-		FindText(InputText[0], " ") || FindText(InputText[0], "") ||
-		FindText(InputText[0], ".") || FindText(InputText[0], "") || FindText(InputText[0], "") ||
+		FindText(InputText[0], " ") || FindText(InputText[0], "ï¿½ï¿½") ||
+		FindText(InputText[0], ".") || FindText(InputText[0], "ï¿½ï¿½") || FindText(InputText[0], "ï¿½ï¿½") ||
 		FindText(InputText[0], "Webzen") || FindText(InputText[0], "WebZen") || FindText(InputText[0], "webzen") || FindText(InputText[0], "WEBZEN") ||
 		FindText(InputText[0], GlobalText[457]) || FindText(InputText[0], GlobalText[458]))
 		return true;
@@ -969,7 +969,7 @@ void StartGame()
 
 			::ReleaseCharacterSceneData();
 			InitLoading = false;
-			SceneFlag = LOADING_SCENE;
+		SceneFlag = LOADING_SCENE;
 		}
 	}
 }
@@ -1688,7 +1688,7 @@ void NewMoveLogInScene()
 	{
 		g_ErrorReport.Write("> Request Character list\r\n");
 		CCameraMove::GetInstancePtr()->SetTourMode(FALSE);
-		SceneFlag = CHARACTER_SCENE;
+	SceneFlag = CHARACTER_SCENE;
 		SendRequestCharactersList(g_pMultiLanguage->GetLanguage());
 		ReleaseLogoSceneData();
 		ClearCharacters();

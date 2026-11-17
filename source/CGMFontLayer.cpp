@@ -3,6 +3,9 @@
 #include "CGMFontLayer.h"
 #include "MultiLanguage.h"
 #include "./Utilities/Log/muConsoleDebug.h"
+#include "gfx/GfxTexture.h"
+#include "gfx/GfxTrace.h"
+#include "gfx/GfxRenderer.h"
 
 extern void BindTexture(int tex);
 
@@ -56,7 +59,11 @@ void CGMFontLayer::runtime_load_bitmap(GLuint* textures, GLsizei _width, GLsizei
 	}
 	glGenTextures(1, textures);
 	glBindTexture(GL_TEXTURE_2D, *textures);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, _width, _height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, data);
+	// O core profile nao aceita GL_ALPHA como internal format. A conversao
+	// para RGBA (com RGB zerado) preserva exatamente a semantica do
+	// GL_ALPHA original: a textura devolve (0, 0, 0, cobertura).
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, _width, _height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+		gfx::TextureManager::ExpandAlphaToRGBA(_width, _height, data).data());
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 0x812D);
@@ -428,7 +435,10 @@ void CGMFontLayer::_TextOut(std::wstring wstrText, int& pen_x, int& pen_y)
 	pen_x = Next_x;
 
 	glBindTexture(GL_TEXTURE_2D, BitmapFontIndex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, LIMIT_WIDTH, LIMIT_HEIGHT, 0, GL_ALPHA, GL_UNSIGNED_BYTE, hFontBuffer.data());
+	// Core profile: internal format sized. A conversao de alpha para RGBA
+	// (RGB zerado) mantem a semantica exata do antigo GL_ALPHA.
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, LIMIT_WIDTH, LIMIT_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+		gfx::TextureManager::ExpandAlphaToRGBA(LIMIT_WIDTH, LIMIT_HEIGHT, hFontBuffer.data()).data());
 }
 
 void CGMFontLayer::runtime_writebuffer(int off_x, int off_y, _FT_Bitmap* pBitmap)

@@ -2,6 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
+#include "gfx/GfxConfig.h"
 #include "CGMProtect.h"
 #include <imm.h>
 #include "UIManager.h"
@@ -551,7 +552,13 @@ void CreateNotice(char* Text, int Color)
 void MoveNotices()
 {
 #ifdef SHUTDOWN_SCALEFORM_INFO
-	gfxinit->Update(0);
+	// A ScaleForm.dll e uma biblioteca proprietaria que usa OpenGL
+	// fixed-function. Nao funciona em core profile, portanto e desativada
+	// quando o renderer moderno esta ativo.
+	if (!gfx::Config::Instance().GetCoreProfile())
+	{
+		gfxinit->Update(0);
+	}
 #else
 	if (NoticeTime-- <= 0)
 	{
@@ -569,7 +576,11 @@ void RenderNotices()
 #endif // KJH_ADD_INGAMESHOP_UI_SYSTEM
 
 #ifdef SHUTDOWN_SCALEFORM_INFO
-	gfxinit->Render(0);
+	// Ver comentario em MoveNotices(): a ScaleForm usa OpenGL fixed-function.
+	if (!gfx::Config::Instance().GetCoreProfile())
+	{
+		gfxinit->Render(0);
+	}
 #else
 	EnableAlphaTest();
 	glColor3f(1.f, 1.f, 1.f);

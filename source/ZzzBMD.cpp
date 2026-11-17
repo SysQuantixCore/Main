@@ -913,7 +913,7 @@ void BMD::BindLightMaps()
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, lmp->Width, lmp->Height, 0, GL_RGB, GL_UNSIGNED_BYTE, lmp->Buffer);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, lmp->Width, lmp->Height, 0, GL_RGB, GL_UNSIGNED_BYTE, lmp->Buffer);
 		}
 	}
 	LightMapEnable = true;
@@ -3237,7 +3237,7 @@ void createPerspectiveMatrix(float* matrix, float fov, float aspect, float _near
 
 void multiplyMatrices(float* result, const float* mat1, const float* mat2)
 {
-	// Multiplicación de matrices 4x4
+	// Multiplicaciï¿½n de matrices 4x4
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
 			result[i * 4 + j] = 0.0f;
@@ -3250,12 +3250,12 @@ void multiplyMatrices(float* result, const float* mat1, const float* mat2)
 
 void rotateMatrix(float* matrix, float angle, float x, float y, float z)
 {
-	// Calculamos la matriz de rotación usando OpenGL
+	// Calculamos la matriz de rotaciï¿½n usando OpenGL
 	float rad = angle * (Q_PI / 180.f);
 	float cosA = cosf(rad);
 	float sinA = sinf(rad);
 
-	// Matriz de rotación 3D en torno al eje (x, y, z)
+	// Matriz de rotaciï¿½n 3D en torno al eje (x, y, z)
 	float rot[16] = {
 		cosA + (1 - cosA) * x * x,        (1 - cosA) * x * y - sinA * z, (1 - cosA) * x * z + sinA * y, 0.0f,
 		(1 - cosA) * y * x + sinA * z,    cosA + (1 - cosA) * y * y,      (1 - cosA) * y * z - sinA * x, 0.0f,
@@ -3263,13 +3263,13 @@ void rotateMatrix(float* matrix, float angle, float x, float y, float z)
 		0.0f, 0.0f, 0.0f, 1.0f
 	};
 
-	// Multiplicamos la matriz actual por la matriz de rotación
+	// Multiplicamos la matriz actual por la matriz de rotaciï¿½n
 	multiplyMatrices(matrix, matrix, rot);
 }
 
 void translateMatrix(float* matrix, float tx, float ty, float tz)
 {
-	// Matriz de traslación
+	// Matriz de traslaciï¿½n
 	float translation[16] = {
 		1.0f, 0.0f, 0.0f, tx,
 		0.0f, 1.0f, 0.0f, ty,
@@ -3277,7 +3277,7 @@ void translateMatrix(float* matrix, float tx, float ty, float tz)
 		0.0f, 0.0f, 0.0f, 1.0f
 	};
 
-	// Multiplicamos la matriz actual por la matriz de traslación
+	// Multiplicamos la matriz actual por la matriz de traslaciï¿½n
 	multiplyMatrices(matrix, matrix, translation);
 }
 
@@ -3294,19 +3294,19 @@ void createViewMatrix(float* matrix, float* cameraPosition, float* cameraAngles,
 	// Primero, copiamos la matriz de identidad al arreglo final
 	memcpy(matrix, identity, sizeof(float) * 16);
 
-	// Realizamos las rotaciones de la cámara según los ángulos
-	// Rotación en el eje Y (alrededor de Y)
+	// Realizamos las rotaciones de la cï¿½mara segï¿½n los ï¿½ngulos
+	// Rotaciï¿½n en el eje Y (alrededor de Y)
 	rotateMatrix(matrix, cameraAngles[1], 0.f, 1.f, 0.f);
 
-	// Si la vista no es superior, aplicamos la rotación en el eje X
+	// Si la vista no es superior, aplicamos la rotaciï¿½n en el eje X
 	if (!cameraTopViewEnable) {
 		rotateMatrix(matrix, cameraAngles[0], 1.f, 0.f, 0.f);
 	}
 
-	// Rotación en el eje Z (alrededor de Z)
+	// Rotaciï¿½n en el eje Z (alrededor de Z)
 	rotateMatrix(matrix, cameraAngles[2], 0.f, 0.f, 1.f);
 
-	// Aplicamos la traslación para posicionar la cámara (en el espacio mundial)
+	// Aplicamos la traslaciï¿½n para posicionar la cï¿½mara (en el espacio mundial)
 	translateMatrix(matrix, -cameraPosition[0], -cameraPosition[1], -cameraPosition[2]);
 }
 

@@ -1,12 +1,17 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 #include "stdafx.h"
+#include "gfx/GfxRenderer.h"
 
 #define WIN32_LEAN_AND_MEAN
 #define WIN32_EXTRA_LEAN
 
 #include <locale.h>
 #include <zmouse.h>
+#include "gfx/GfxConfig.h"
+#include "gfx/GfxContext.h"
+#include "gfx/GfxTrace.h"
+#include "gfx/GfxImGui.h"
 #include "UIWindows.h"
 #include "UIManager.h"
 #include "ZzzOpenglUtil.h"
@@ -296,17 +301,15 @@ GLvoid KillGLWindow(GLvoid)
 {
 	if (g_hRC)
 	{
+		// gfx::GfxContext::Destroy tambem libera os recursos do renderer
+		// moderno (shaders, VAO/VBO) antes de apagar o contexto.
 		if (!wglMakeCurrent(NULL, NULL))
 		{
 			g_ErrorReport.Write("GL - Release Of DC And RC Failed\r\n");
 			MessageBox(NULL, "Release Of DC And RC Failed.", "Error", MB_OK | MB_ICONINFORMATION);
 		}
 
-		if (!wglDeleteContext(g_hRC))
-		{
-			g_ErrorReport.Write("GL - Release Rendering Context Failed\r\n");
-			MessageBox(NULL, "Release Rendering Context Failed.", "Error", MB_OK | MB_ICONINFORMATION);
-		}
+		gfx::GfxContext::Destroy(g_hRC);
 
 		g_hRC = NULL;
 	}
@@ -340,70 +343,78 @@ namespace
 
 bool CreateOpenglWindow()
 {
-	PIXELFORMATDESCRIPTOR pfd;
-	memset(&pfd, 0, sizeof(pfd));
-	pfd.nSize = sizeof(pfd);
-	pfd.nVersion = 1;
-	pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-	pfd.iPixelType = PFD_TYPE_RGBA;
-	pfd.cColorBits = 32;
-	pfd.cDepthBits = 24;
+	// A camada gfx decide em tempo de execucao qual backend sera usado
+	// (legado fixed-function ou moderno VBO/VAO + GLSL). A configuracao vem
+	// de Graphics.ini e/ou da linha de comando.
+	gfx::Config::Instance().Load();
+	gfx::TraceEnable(gfx::Config::Instance().GetVerbose());
+	gfx::Trace("[gfx] CreateOpenglWindow: backend=%s solicitado=%s", gfx::Config::Instance().GetBackendName(), gfx::Config::Instance().GetVersionName());
 
 	if (!(g_hDC = GetDC(gwinhandle->GethWnd())))
 	{
 		return FailOpenGLStep("OpenGL Get DC Error - ErrorCode : %d\r\n", "OpenGL Get DC Error.");
 	}
 
-	GLuint PixelFormat;
+	gfx::ContextInfo gfxInfo;
+	std::string gfxError;
 
-	if (!(PixelFormat = ChoosePixelFormat(g_hDC, &pfd)))
+	if (!gfx::GfxContext::Create(g_hDC, g_hRC, gfxInfo, gfxError))
 	{
-		return FailOpenGLStep("OpenGL Choose Pixel Format Error - ErrorCode : %d\r\n", "OpenGL Choose Pixel Format Error.");
+		g_ErrorReport.Write("OpenGL Context Error - %s\r\n", gfxError.c_str());
+		KillGLWindow();
+		MessageBox(NULL, GlobalText[4], "OpenGL Context Error.", MB_OK | MB_ICONEXCLAMATION);
+		return false;
 	}
 
-	if (!DescribePixelFormat(g_hDC, PixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &pfd))
+	// O modulo gfx ja garante que o contexto final (moderno ou legado) esta
+	// current e que o GLEW foi inicializado sobre ele.
+	if (!gfxInfo.Modern && !gfxInfo.FallbackReason.empty())
 	{
-		return FailOpenGLStep("OpenGL Describe Pixel Format Error - ErrorCode : %d\r\n", "OpenGL Describe Pixel Format Error.");
+		// Mensagem clara: o driver nao suportou o backend moderno e o jogo
+		// voltou para o renderer legado (comportamento original).
+		std::string message = "OpenGL moderno indisponivel neste sistema.\r\n\r\n";
+		message += gfxInfo.FallbackReason;
+		message += "\r\n\r\nO cliente sera executado com o renderer legado (fixed-function).";
+
+		g_ErrorReport.Write("OpenGL modern fallback: %s\r\n", gfxInfo.FallbackReason.c_str());
+		MessageBox(NULL, message.c_str(), "OpenGL", MB_OK | MB_ICONWARNING);
 	}
 
-	if (!SetPixelFormat(g_hDC, PixelFormat, &pfd))
-	{
-		return FailOpenGLStep("OpenGL Set Pixel Format Error - ErrorCode : %d\r\n", "OpenGL Set Pixel Format Error.");
-	}
+	g_ErrorReport.Write("OpenGL GPU vendor: %s\r\n", gfxInfo.Vendor.c_str());
+	g_ErrorReport.Write("OpenGL GPU renderer: %s\r\n", gfxInfo.Renderer.c_str());
+	g_ErrorReport.Write("OpenGL version: %s | Renderer: %s\r\n",
+		gfxInfo.Version.c_str(),
+		gfx::Config::Instance().GetBackendName());
 
-	if (!(g_hRC = wglCreateContext(g_hDC)))
-	{
-		return FailOpenGLStep("OpenGL Create Context Error - ErrorCode : %d\r\n", "OpenGL Create Context Error.");
-	}
+	GAME_LOG_INFO_F("Init", "OpenGL renderer=%s version=%s vendor=%s gpu=%s",
+		gfxInfo.Modern ? "modern" : "legacy",
+		gfxInfo.Version.c_str(),
+		gfxInfo.Vendor.c_str(),
+		gfxInfo.Renderer.c_str());
 
-	if (!wglMakeCurrent(g_hDC, g_hRC))
-	{
-		return FailOpenGLStep("OpenGL Make Current Error - ErrorCode : %d\r\n", "OpenGL Make Current Error.");
-	}
-
-	const GLenum glewStatus = glewInit();
-	if (glewStatus != GLEW_OK)
-	{
-		g_ErrorReport.Write("OpenGL extension loader warning: %s\r\n",
-			reinterpret_cast<const char*>(glewGetErrorString(glewStatus)));
-	}
-
-	const GLubyte* glVendor = glGetString(GL_VENDOR);
-	const GLubyte* glRenderer = glGetString(GL_RENDERER);
-	const GLubyte* glVersion = glGetString(GL_VERSION);
 	GLint maxTextureSize = 0;
 	GLint maxTextureUnits = 1;
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
 	if (GLEW_VERSION_1_3 || GLEW_ARB_multitexture)
 		glGetIntegerv(GL_MAX_TEXTURE_UNITS, &maxTextureUnits);
 
-	g_ErrorReport.Write("OpenGL GPU vendor: %s\r\n", glVendor ? reinterpret_cast<const char*>(glVendor) : "Unknown");
-	g_ErrorReport.Write("OpenGL GPU renderer: %s\r\n", glRenderer ? reinterpret_cast<const char*>(glRenderer) : "Unknown");
-	g_ErrorReport.Write("OpenGL version: %s | Max texture: %d | Texture units: %d\r\n",
-		glVersion ? reinterpret_cast<const char*>(glVersion) : "Unknown",
-		maxTextureSize, maxTextureUnits);
+	g_ErrorReport.Write("OpenGL max texture: %d | Texture units: %d\r\n", maxTextureSize, maxTextureUnits);
 
 	glEnable(GL_MULTISAMPLE);
+
+	// VSync (WGL_EXT_swap_control). Desligado por padrao para nao alterar
+	// o comportamento atual do limitador de frames por software.
+	if (gfx::Config::Instance().GetVSync())
+	{
+		if (gfx::GfxContext::SetVSync(g_hDC, true))
+		{
+			g_ErrorReport.Write("OpenGL VSync enabled.\r\n");
+		}
+		else
+		{
+			g_ErrorReport.Write("OpenGL VSync requested but WGL_EXT_swap_control is unavailable.\r\n");
+		}
+	}
 
 	ShowWindow(gwinhandle->GethWnd(), SW_SHOW);
 	SetForegroundWindow(gwinhandle->GethWnd());
@@ -419,14 +430,14 @@ void CreateImGuiWindow()
 	ImGui::CreateContext();
 	ImGui::StyleColorsDark();
 	ImGui_ImplWin32_Init(gwinhandle->GethWnd());
-	ImGui_ImplOpenGL2_Init();
+	gfx::ImGuiBridge::Init();
 #endif // IMPLEMENT_IMGUI_WIN32
 }
 
 void DestroyImGuiWindow()
 {
 #ifdef IMPLEMENT_IMGUI_WIN32
-	ImGui_ImplOpenGL2_Shutdown();
+	gfx::ImGuiBridge::Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 #endif // IMPLEMENT_IMGUI_WIN32
@@ -1209,6 +1220,38 @@ bool ExceptionCallback(_EXCEPTION_POINTERS* pExceptionInfo)
 			WriteFormattedLine(crashLogFile, "EAX=0x%08X EBX=0x%08X ECX=0x%08X EDX=0x%08X\r\n", pExceptionInfo->ContextRecord->Eax, pExceptionInfo->ContextRecord->Ebx, pExceptionInfo->ContextRecord->Ecx, pExceptionInfo->ContextRecord->Edx);
 			WriteFormattedLine(crashLogFile, "ESI=0x%08X EDI=0x%08X EBP=0x%08X ESP=0x%08X\r\n", pExceptionInfo->ContextRecord->Esi, pExceptionInfo->ContextRecord->Edi, pExceptionInfo->ContextRecord->Ebp, pExceptionInfo->ContextRecord->Esp);
 			WriteFormattedLine(crashLogFile, "EIP=0x%08X EFlags=0x%08X\r\n", pExceptionInfo->ContextRecord->Eip, pExceptionInfo->ContextRecord->EFlags);
+
+			// Caminhada manual da pilha por frame pointer.
+			//
+			// A StackWalk64() falha quando a pilha esta esgotada (erro
+			// STACK_OVERFLOW), que e exatamente o caso stack overflow.
+			// Nested nas chamadas existe para o caso de STACK_OVERFLOW:
+			// percorrer a cadeia de EBP revela a recursao infinita.
+			WriteFormattedLine(crashLogFile, "\r\n[StackFrames por frame pointer]\r\n");
+			DWORD* frame = (DWORD*)(ULONG_PTR)pExceptionInfo->ContextRecord->Ebp;
+			for (int frameIndex = 0; frameIndex < 48 && frame != NULL; ++frameIndex)
+			{
+				// Sanidade: o frame precisa estar em pilha plausivel.
+				ULONG_PTR candidate = (ULONG_PTR)frame;
+				if (candidate < 0x00010000 || candidate > 0x7FFEFFFF)
+				{
+					break;
+				}
+
+				const DWORD returnAddress = frame[1];
+				char frameModulePath[MAX_PATH] = { 0 };
+				DWORD_PTR frameModuleOffset = 0;
+				GetModuleFromAddress((void*)(ULONG_PTR)returnAddress, frameModulePath, MAX_PATH, &frameModuleOffset);
+				WriteFormattedLine(crashLogFile, "  #%02d ret=0x%08X  %s+0x%p\r\n",
+					frameIndex, returnAddress, frameModulePath, (void*)frameModuleOffset);
+
+				const DWORD nextFrame = frame[0];
+				if (nextFrame <= (DWORD)(ULONG_PTR)frame)
+				{
+					break; // a pilha nao esta mais crescendo
+				}
+				frame = (DWORD*)(ULONG_PTR)nextFrame;
+			}
 		}
 #elif defined(_M_X64)
 		if (pExceptionInfo->ContextRecord)
@@ -1663,7 +1706,12 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLin
 	g_ErrorReport.Write("> Start window success.\r\n");
 
 #ifdef SHUTDOWN_SCALEFORM_INFO
-	gfxinit->runtime_connection();
+	// A ScaleForm.dll usa OpenGL fixed-function e nao funciona em core
+	// profile (renderer moderno).
+	if (!gfx::Config::Instance().GetCoreProfile())
+	{
+		gfxinit->runtime_connection();
+	}
 #endif // SHUTDOWN_SCALEFORM_INFO
 
 	if (!CreateOpenglWindow())

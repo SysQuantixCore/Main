@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "gfx/GfxConfig.h"
 #include "CGMProtect.h"
 
 #include "UIControls.h"
@@ -6108,7 +6109,11 @@ void OpenBasicData(HDC hDC)
 #endif // MAIN_UPDATE > 303
 
 #ifdef SHUTDOWN_SCALEFORM_INFO
-	gfxinit->LoadMovie();
+	// ScaleForm usa OpenGL fixed-function: desativado no renderer moderno.
+	if (!gfx::Config::Instance().GetCoreProfile())
+	{
+		gfxinit->LoadMovie();
+	}
 #endif // SHUTDOWN_SCALEFORM_INFO
 
 	rUIMng.SetLoadProgress(hDC, 11, LOAD_PROGRESS_TOTAL, "Sons da interface");

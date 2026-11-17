@@ -82,6 +82,12 @@
 //opengl
 #include <gl/glew.h>
 #include <gl/gl.h>
+#include <gl\glu.h>
+// Camada de abstracao grafica (gfx/). Deve ficar DEPOIS dos headers do
+// OpenGL: as macros deste header redirecionam as chamadas gl*/glu* do motor
+// legado para o modulo gfx, que decide em tempo de execucao entre o
+// backend legado (fixed-function) e o backend moderno (VBO/VAO + GLSL).
+#include "gfx/GfxGLAdapter.h"
 
 #ifndef MAIN_UPDATE
 #define MAIN_UPDATE 603

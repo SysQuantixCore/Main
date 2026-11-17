@@ -206,6 +206,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\dependencies\ImGui\backends\imgui_impl_opengl3.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\dependencies\ImGui\backends\imgui_impl_win32.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
@@ -248,6 +252,18 @@
     <ClCompile Include="CGMCharacter.cpp" />
     <ClCompile Include="CGMCameraWorld.cpp" />
     <ClCompile Include="CShaderGL.cpp" />
+    <ClCompile Include="gfx\GfxBuffer.cpp" />
+    <ClCompile Include="gfx\GfxConfig.cpp" />
+    <ClCompile Include="gfx\GfxContext.cpp" />
+    <ClCompile Include="gfx\GfxGLAdapter.cpp" />
+    <ClCompile Include="gfx\GfxMath.cpp" />
+    <ClCompile Include="gfx\GfxRenderer.cpp" />
+    <ClCompile Include="gfx\GfxShader.cpp" />
+    <ClCompile Include="gfx\GfxShaders.cpp" />
+    <ClCompile Include="gfx\GfxState.cpp" />
+    <ClCompile Include="gfx\GfxTexture.cpp" />
+    <ClCompile Include="gfx\GfxImGui.cpp" />
+    <ClCompile Include="gfx\GfxTrace.cpp" />
     <ClCompile Include="CustomEventTime.cpp" />
     <ClCompile Include="ItemTooltip.cpp" />
     <ClCompile Include="NewUIListGroupButton.cpp" />
@@ -675,6 +691,7 @@
   <ItemGroup>
     <ClInclude Include="..\dependencies\include\Util\CCRC32.H" />
     <ClInclude Include="..\dependencies\ImGui\imconfig.h" />
+    <ClInclude Include="..\dependencies\ImGui\backends\imgui_impl_opengl3.h" />
     <ClInclude Include="..\dependencies\ImGui\imgui.h" />
     <ClInclude Include="..\dependencies\ImGui\imgui_internal.h" />
     <ClInclude Include="..\dependencies\ImGui\imstb_rectpack.h" />
@@ -699,6 +716,21 @@
     <ClInclude Include="CGMCharacter.h" />
     <ClInclude Include="CGMCameraWorld.h" />
     <ClInclude Include="CShaderGL.h" />
+    <ClInclude Include="gfx\GfxBuffer.h" />
+    <ClInclude Include="gfx\GfxConfig.h" />
+    <ClInclude Include="gfx\GfxContext.h" />
+    <ClInclude Include="gfx\GfxGLAdapter.h" />
+    <ClInclude Include="gfx\GfxMath.h" />
+    <ClInclude Include="gfx\GfxRawGL.h" />
+    <ClInclude Include="gfx\GfxRenderer.h" />
+    <ClInclude Include="gfx\GfxShader.h" />
+    <ClInclude Include="gfx\GfxShaders.h" />
+    <ClInclude Include="gfx\GfxState.h" />
+    <ClInclude Include="gfx\GfxTypes.h" />
+    <ClInclude Include="gfx\GfxTexture.h" />
+    <ClInclude Include="gfx\GfxImGui.h" />
+    <ClInclude Include="gfx\GfxTrace.h" />
+    <ClInclude Include="gfx\GfxGLM.h" />
     <ClInclude Include="CustomEventTime.h" />
     <ClInclude Include="ItemTooltip.h" />
     <ClInclude Include="NewUIListGroupButton.h" />

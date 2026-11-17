@@ -1,4 +1,5 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
+#include "gfx/GfxTrace.h"
 #include "UIManager.h"
 #include "GuildCache.h"
 #include "ZzzBMD.h"
@@ -957,7 +958,7 @@ BOOL ReceiveLogOut(BYTE* ReceiveBuffer, BOOL bEncrypted)
 		ReleaseMainData();
 		CryWolfMVPInit();
 
-		SceneFlag = CHARACTER_SCENE;
+	SceneFlag = CHARACTER_SCENE;
 
 		SendRequestCharactersList(g_pMultiLanguage->GetLanguage());
 

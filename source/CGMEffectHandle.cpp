@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "gfx/GfxImGui.h"
 #include "ZzzTexture.h"
 #include "NewUISystem.h"
 #include "CGMEffectHandle.h"
@@ -134,7 +135,7 @@ void SEASON3B::CGFxEffectHandle::SetButtonInfo()
 void SEASON3B::CGFxEffectHandle::RenderFrame()
 {
 	// Iniciar frame de ImGui
-	ImGui_ImplOpenGL2_NewFrame();
+	gfx::ImGuiBridge::NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	// Iniciar frame de ImGui
 	ImGui::NewFrame();
@@ -146,7 +147,7 @@ void SEASON3B::CGFxEffectHandle::RenderFrame()
 
 	ImGui::Begin("RenderMesh Tools", &GraphicImage, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse);
 
-	// Sección 1: Arriba izquierda
+	// Secciï¿½n 1: Arriba izquierda
 	ImGui::BeginChild("Child1", ImVec2((160 * g_fScreenRate_x), 0), ImGuiChildFlags_Border);
 
 	ImGui::BeginChild("Sub-Child1", ImVec2(0, (110.f * g_fScreenRate_y)), ImGuiChildFlags_Border);
@@ -158,7 +159,7 @@ void SEASON3B::CGFxEffectHandle::RenderFrame()
 
 	ImGui::EndChild();
 
-	// Contenido de la primera sección
+	// Contenido de la primera secciï¿½n
 	ImGui::EndChild();
 
 	ImGui::SameLine();
@@ -172,7 +173,7 @@ void SEASON3B::CGFxEffectHandle::RenderFrame()
 
 	ImGui::Render();
 
-	ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+	gfx::ImGuiBridge::RenderDrawData(ImGui::GetDrawData());
 
 	//------------------
 	if (selectedItem != -1)
@@ -535,7 +536,7 @@ void SEASON3B::ComboBoxGird::Render(const char* nameId, const char* error)
 			}
 			if (isSelected)
 			{
-				ImGui::SetItemDefaultFocus(); // Foco en la opción seleccionada
+				ImGui::SetItemDefaultFocus(); // Foco en la opciï¿½n seleccionada
 			}
 		}
 		ImGui::EndCombo();
