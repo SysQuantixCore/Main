@@ -124,8 +124,6 @@ AI applications are accepted for:
 
 Contributors remain responsible for human review, technical validation, security, and the provenance of their contributions.
 
-See [AI-DEVELOPMENT-POLICY.md](AI-DEVELOPMENT-POLICY.md) for the complete guidelines.
-
 **Release information:**
 
 - **Version:** 2.0.0.0
