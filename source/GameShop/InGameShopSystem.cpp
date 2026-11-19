@@ -65,6 +65,9 @@ void CInGameShopSystem::Initalize()
 	m_bIsRequestShopOpenning = false;
 	m_bAbleRequestEventPackage = true;
 	InitZoneInfo();
+
+	// Atributos reais dos itens vendidos (level, excellent, etc.)
+	LoadProductOption("Data\\CashShop\\CashShopProduct.txt");
 }
 
 void CInGameShopSystem::Release()
@@ -453,6 +456,68 @@ WORD CInGameShopSystem::GetPackageItemCode(int iIndex)
 	}
 
 	return atoi((*iterPackage).InGamePackageID);
+}
+
+void CInGameShopSystem::LoadProductOption(const char* szFilePath)
+{
+	m_mapProductOption.clear();
+
+	FILE* fp = fopen(szFilePath, "r");
+	if(fp == NULL)
+		return;
+
+	char szLine[1024];
+
+	while(fgets(szLine, sizeof(szLine), fp) != NULL)
+	{
+		char* p = szLine;
+
+		while(*p == ' ' || *p == '\t')
+			p++;
+
+		if(*p == '\0' || *p == '/' || *p == '\r' || *p == '\n')
+			continue;
+
+		CASH_SHOP_PRODUCT_OPTION info;
+		int iDummy = 0;
+
+		int iResult = sscanf(p, "%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d",
+			&info.iProductSeq, &iDummy, &iDummy, &info.iItemIndex,
+			&info.iLevel, &info.iSkill, &info.iLuck, &info.iOption,
+			&info.iExOpt, &info.iAncOp, &info.iJoh, &info.iOexe,
+			&info.iSocket[0], &info.iSocket[1], &info.iSocket[2], &info.iSocket[3], &info.iSocket[4],
+			&info.iQuantity, &info.iDuration);
+
+		if(iResult == 19)
+			m_mapProductOption[info.iProductSeq] = info;
+	}
+
+	fclose(fp);
+}
+
+bool CInGameShopSystem::GetProductOption(int iProductSeq, OUT CASH_SHOP_PRODUCT_OPTION& info) const
+{
+	type_mapProductOption::const_iterator it = m_mapProductOption.find(iProductSeq);
+
+	if(it == m_mapProductOption.end())
+		return false;
+
+	info = it->second;
+	return true;
+}
+
+bool CInGameShopSystem::GetProductOptionByItemCode(int iItemCode, OUT CASH_SHOP_PRODUCT_OPTION& info) const
+{
+	for(type_mapProductOption::const_iterator it = m_mapProductOption.begin(); it != m_mapProductOption.end(); ++it)
+	{
+		if(it->second.iItemIndex == iItemCode)
+		{
+			info = it->second;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void CInGameShopSystem::SetTotalCash(double dTotalCash)

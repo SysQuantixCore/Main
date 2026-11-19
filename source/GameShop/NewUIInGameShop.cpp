@@ -40,10 +40,15 @@ void CNewUIInGameShop::Init()
 	m_iStorageCurrentPageReceiveItemCnt = 0;
 	m_bRequestCurrentPage = false;
 
+	m_pToolTipItem = NULL;
+	m_wToolTipItemType = 0;
+	m_iPointedDisplayItemIndex = -1;
 }
 
 void CNewUIInGameShop::Release()
 {
+	DeleteItemToolTip();
+
 	UnloadImages();
 
 	ReleaseBanner();
@@ -123,6 +128,8 @@ bool CNewUIInGameShop::Render()
 	RenderListBox();
 
 	RenderDisplayItems();
+
+	RenderItemToolTip();
 
 	DisableAlphaBlend();
 
@@ -376,7 +383,20 @@ void CNewUIInGameShop::RenderDisplayItems()
 	{
 		int iPosX = IGS_ITEMRENDER_POS_X_STANDAD + (IMAGE_IGS_VIEWDETAIL_BTN_DISTANCE_X * (i % IGS_NUM_ITEMS_WIDTH));
 		int iPosY = IGS_ITEMRENDER_POS_Y_STANDAD + (IMAGE_IGS_VIEWDETAIL_BTN_DISTANCE_Y * (i / IGS_NUM_ITEMS_HEIGHT));
-		RenderItem3D(m_Pos.x + iPosX, m_Pos.y + iPosY, IGS_ITEMRENDER_POS_WIDTH, IGS_ITEMRENDER_POS_HEIGHT, g_InGameShopSystem->GetPackageItemCode(i), 0, 0, 0, true);
+
+		int iLevel = 0;
+		int iOption1 = 0;
+		int iExtOption = 0;
+
+		CASH_SHOP_PRODUCT_OPTION option;
+		if (GetDisplayItemOption(i, option))
+		{
+			iLevel = (option.iLevel * 8) | ((option.iSkill > 0) ? 0x80 : 0) | ((option.iLuck > 0) ? 0x04 : 0) | (option.iOption & 0x03);
+			iOption1 = option.iExOpt | ((option.iOption > 3) ? 0x40 : 0);
+			iExtOption = option.iAncOp;
+		}
+
+		RenderItem3D(m_Pos.x + iPosX, m_Pos.y + iPosY, IGS_ITEMRENDER_POS_WIDTH, IGS_ITEMRENDER_POS_HEIGHT, g_InGameShopSystem->GetPackageItemCode(i), iLevel, iOption1, iExtOption, true);
 	}
 
 	UpdateMousePositionn();
@@ -387,6 +407,139 @@ void CNewUIInGameShop::RenderDisplayItems()
 	glPopMatrix();
 
 	BeginBitmap();
+}
+
+bool CNewUIInGameShop::GetDisplayItemRect(int iIndex, RECT& rcItem) const
+{
+	if (iIndex < 0 || iIndex >= g_InGameShopSystem->GetSizePackageAsDisplayPackage())
+		return false;
+
+	int iPosX = IGS_ITEMRENDER_POS_X_STANDAD + (IMAGE_IGS_VIEWDETAIL_BTN_DISTANCE_X * (iIndex % IGS_NUM_ITEMS_WIDTH));
+	int iPosY = IGS_ITEMRENDER_POS_Y_STANDAD + (IMAGE_IGS_VIEWDETAIL_BTN_DISTANCE_Y * (iIndex / IGS_NUM_ITEMS_HEIGHT));
+
+	// Area do slot: inclui o nome (acima) e a imagem do item
+	rcItem.left = m_Pos.x + iPosX;
+	rcItem.top = m_Pos.y + iPosY - 30;
+	rcItem.right = rcItem.left + IGS_ITEMRENDER_POS_WIDTH;
+	rcItem.bottom = rcItem.top + IGS_ITEMRENDER_POS_HEIGHT + 30;
+
+	return true;
+}
+
+bool CNewUIInGameShop::GetDisplayItemOption(int iIndex, OUT CASH_SHOP_PRODUCT_OPTION& info) const
+{
+	CShopPackage* pPackage = g_InGameShopSystem->GetDisplayPackage(iIndex);
+	if (pPackage == NULL)
+		return false;
+
+	int iProductSeq = 0;
+	pPackage->GetProductSeqFirst(iProductSeq);
+
+	if (g_InGameShopSystem->GetProductOption(iProductSeq, info))
+		return true;
+
+	return g_InGameShopSystem->GetProductOptionByItemCode(atoi(pPackage->InGamePackageID), info);
+}
+
+void CNewUIInGameShop::DeleteItemToolTip()
+{
+	if (m_pToolTipItem && g_pNewItemMng)
+	{
+		g_pNewItemMng->DeleteItem(m_pToolTipItem);
+		m_pToolTipItem = NULL;
+	}
+
+	m_wToolTipItemType = 0;
+	m_iPointedDisplayItemIndex = -1;
+}
+
+void CNewUIInGameShop::UpdateItemToolTip()
+{
+	int iPointedIndex = -1;
+
+	if (g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_INGAMESHOP))
+	{
+		int iPackageCount = g_InGameShopSystem->GetSizePackageAsDisplayPackage();
+
+		for (int i = 0; i < iPackageCount; i++)
+		{
+			RECT rcItem;
+			if (GetDisplayItemRect(i, rcItem) == false)
+				continue;
+
+			if (MouseX >= rcItem.left && MouseX < rcItem.right
+				&& MouseY >= rcItem.top && MouseY < rcItem.bottom)
+			{
+				iPointedIndex = i;
+				break;
+			}
+		}
+	}
+
+	WORD wItemType = 0;
+	if (iPointedIndex >= 0)
+		wItemType = g_InGameShopSystem->GetPackageItemCode(iPointedIndex);
+
+	if (iPointedIndex == m_iPointedDisplayItemIndex
+		&& wItemType == m_wToolTipItemType
+		&& m_pToolTipItem != NULL)
+		return;
+
+	DeleteItemToolTip();
+
+	if (iPointedIndex < 0 || wItemType == 0 || wItemType == (WORD)-1 || g_pNewItemMng == NULL)
+		return;
+
+	Script_Item* pItemAttr = GMItemMng->find(wItemType);
+	if (pItemAttr == NULL)
+		return;
+
+	CASH_SHOP_PRODUCT_OPTION option;
+	bool bHasOption = GetDisplayItemOption(iPointedIndex, option);
+
+	int iItemLevel = 0;
+	BYTE byLevel = 0;
+	BYTE byOption1 = 0;
+	BYTE byExtOption = 0;
+	BYTE byHarmony = 0;
+	BYTE bySocket[5] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+
+	if (bHasOption)
+	{
+		// Codificacao igual a do servidor (ItemByteConvert)
+		iItemLevel = option.iLevel;
+		byLevel = (BYTE)((option.iLevel * 8) | ((option.iSkill > 0) ? 0x80 : 0) | ((option.iLuck > 0) ? 0x04 : 0) | (option.iOption & 0x03));
+		byOption1 = (BYTE)(option.iExOpt | ((option.iOption > 3) ? 0x40 : 0));
+		byExtOption = (BYTE)option.iAncOp;
+		byHarmony = (BYTE)option.iJoh;
+
+		for (int i = 0; i < 5; ++i)
+			bySocket[i] = (BYTE)option.iSocket[i];
+	}
+
+	m_pToolTipItem = g_pNewItemMng->CreateItem(wItemType, byLevel, 0, byOption1, byExtOption, 0, byHarmony, bySocket);
+	if (m_pToolTipItem)
+	{
+		m_pToolTipItem->Durability = (BYTE)calcMaxDurability(m_pToolTipItem, pItemAttr, iItemLevel);
+
+		m_wToolTipItemType = wItemType;
+		m_iPointedDisplayItemIndex = iPointedIndex;
+	}
+}
+
+void CNewUIInGameShop::RenderItemToolTip()
+{
+	if (m_pToolTipItem == NULL || m_iPointedDisplayItemIndex < 0)
+		return;
+
+	RECT rcItem;
+	if (GetDisplayItemRect(m_iPointedDisplayItemIndex, rcItem) == false)
+		return;
+
+	int iTargetX = (rcItem.left + rcItem.right) / 2;
+	int iTargetY = rcItem.top + 30 + IGS_ITEMRENDER_POS_HEIGHT;
+
+	g_pNewItemTooltip->RenderItemTooltip(iTargetX, iTargetY, m_pToolTipItem, false, UNKNOWN_TOOLTIP_TYPE);
 }
 
 bool CNewUIInGameShop::BtnProcess()
@@ -478,14 +631,14 @@ bool CNewUIInGameShop::BtnProcess()
 
 		IGS_StorageItem* pSelectItem = m_StorageItemListBox.GetSelectedText();
 
-		if (iStorageIndex == IGS_SAFEKEEPING_LISTBOX)					// º¸°üÇÔ
+		if (iStorageIndex == IGS_SAFEKEEPING_LISTBOX)					// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		{
 			CMsgBoxIGSStorageItemInfo* pMsgBox = NULL;
 			CreateMessageBox(MSGBOX_LAYOUT_CLASS(CMsgBoxIGSStorageItemInfoLayout), &pMsgBox);
 			pMsgBox->Initialize(pSelectItem->m_iStorageSeq, pSelectItem->m_iStorageItemSeq, pSelectItem->m_wItemCode, pSelectItem->m_szType,
 				pSelectItem->m_szName, pSelectItem->m_szNum, pSelectItem->m_szPeriod);
 		}
-		else if (iStorageIndex == IGS_PRESENTBOX_LISTBOX)				// ¼±¹° º¸°üÇÔ
+		else if (iStorageIndex == IGS_PRESENTBOX_LISTBOX)				// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		{
 			CMsgBoxIGSGiftStorageItemInfo* pMsgBox = NULL;
 			CreateMessageBox(MSGBOX_LAYOUT_CLASS(CMsgBoxIGSGiftStorageItemInfoLayout), &pMsgBox);
@@ -528,7 +681,7 @@ bool CNewUIInGameShop::BtnProcess()
 	{
 		if (g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_INGAMESHOP) == true)
 		{
-			SendRequestIGS_CashShopOpen(1);		// ¼¥ Close¿äÃ»
+			SendRequestIGS_CashShopOpen(1);		// ï¿½ï¿½ Closeï¿½ï¿½Ã»
 			g_pNewUISystem->Hide(SEASON3B::INTERFACE_INGAMESHOP);
 
 			return true;
@@ -619,6 +772,8 @@ bool CNewUIInGameShop::UpdateMouseEvent()
 {
 	if (IsVisible() == false)
 		return true;
+
+	UpdateItemToolTip();
 
 	if (BtnProcess())
 		return false;
@@ -772,6 +927,7 @@ void CNewUIInGameShop::ClosingProcess()
 	PlayBuffer(SOUND_CLICK01);
 	m_ListBoxTabButton.ChangeFrame(IGS_SAFEKEEPING_LISTBOX);
 	ClearAllStorageItem();
+	DeleteItemToolTip();
 }
 #if MAIN_UPDATE > 303
 void CNewUIInGameShop::InitZoneBtn()

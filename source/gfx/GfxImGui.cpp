@@ -58,13 +58,19 @@ namespace gfx
 
     void ImGuiBridge::RenderDrawData(ImDrawData* drawData)
     {
+        // O ImGui troca programa, textura e estado GL (inclusive VAO proprio).
+        // Desvincula o VAO do renderer antes e invalida o cache de programa.
+        gfx::Renderer::Instance().FlushBatch();
+        gfx::Renderer::Instance().GetBuffer().Unbind();
         if (g_UseOpenGL3)
         {
             ImGui_ImplOpenGL3_RenderDrawData(drawData);
+            gfx::Renderer::Instance().GetShader().InvalidateProgramCache();
         }
         else
         {
             ImGui_ImplOpenGL2_RenderDrawData(drawData);
+            gfx::Renderer::Instance().GetShader().InvalidateProgramCache();
         }
     }
 }

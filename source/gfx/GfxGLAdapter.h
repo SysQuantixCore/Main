@@ -94,6 +94,22 @@ void gfxGLGetFloatv(GLenum pname, GLfloat* params);
 void gfxGLReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
                       GLenum format, GLenum type, void* pixels);
 
+// Estado cru: so existe para invalidar o lote de batching quando o estado
+// muda. No backend legado chama a GL original (comportamento bit-a-bit).
+void gfxGLBindTexture(GLenum target, GLuint texture);
+void gfxGLBlendFunc(GLenum sfactor, GLenum dfactor);
+void gfxGLDepthFunc(GLenum func);
+void gfxGLDepthMask(GLboolean flag);
+void gfxGLViewport(GLint x, GLint y, GLsizei width, GLsizei height);
+void gfxGLScissor(GLint x, GLint y, GLsizei width, GLsizei height);
+void gfxGLColorMask(GLboolean r, GLboolean g, GLboolean b, GLboolean a);
+void gfxGLFrontFace(GLenum mode);
+void gfxGLClear(GLbitfield mask);
+
+// Profiling de apresentacao (glFlush/SwapBuffers) - so com verbose.
+void gfxGLFlush(void);
+BOOL gfxGLSwapBuffers(HDC hdc);
+
 // ---------------------------------------------------------------------
 // Macros de redirecionamento
 // ---------------------------------------------------------------------
@@ -142,3 +158,16 @@ void gfxGLReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 #define glTexEnvf            gfxGLTexEnvf
 #define glGetFloatv          gfxGLGetFloatv
 #define glReadPixels         gfxGLReadPixels
+
+// Estado cru (batching): fecham o lote antes de mudar o estado.
+#define glBindTexture        gfxGLBindTexture
+#define glBlendFunc          gfxGLBlendFunc
+#define glDepthFunc          gfxGLDepthFunc
+#define glDepthMask          gfxGLDepthMask
+#define glViewport           gfxGLViewport
+#define glScissor            gfxGLScissor
+#define glColorMask          gfxGLColorMask
+#define glFrontFace          gfxGLFrontFace
+#define glClear              gfxGLClear
+#define glFlush              gfxGLFlush
+#define SwapBuffers          gfxGLSwapBuffers

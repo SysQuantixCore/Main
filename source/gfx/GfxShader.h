@@ -38,11 +38,16 @@ namespace gfx
 
         void Use() const;
 
+        // Invalida o cache de glUseProgram. Deve ser chamado quando outro
+        // codigo (ImGui, ScaleForm) pode ter trocado o programa atual.
+        void InvalidateProgramCache() const { m_LastUsedProgram = 0xFFFFFFFF; }
+
         // Uniformes (retorna -1 se a uniform nao existir / foi otimizada).
         void SetInt(const char* name, GLint value);
         void SetFloat(const char* name, GLfloat value);
         void SetVec3(const char* name, GLfloat x, GLfloat y, GLfloat z);
         void SetMat4(const char* name, const float* value);
+        void SetHandle(const char* name, GLuint64 value);
 
         const std::string& GetLastError() const { return m_ErrorLog; }
 
@@ -52,6 +57,11 @@ namespace gfx
         GLuint m_Program = 0;
         GLuint m_VertexShader = 0;
         GLuint m_FragmentShader = 0;
+
+        // Cache do programa atual: glUseProgram e uma das chamadas mais caras
+        // por draw. O renderer desenha centenas de primitivas por frame, todas
+        // com o mesmo programa, entao evitamos a chamada redundante.
+        mutable GLuint m_LastUsedProgram = 0;
 
         std::unordered_map<std::string, GLint> m_UniformCache;
         std::string m_ErrorLog;

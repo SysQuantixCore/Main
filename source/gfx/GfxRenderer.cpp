@@ -5,14 +5,49 @@
 #include "gfx/GfxRenderer.h"
 #include "gfx/GfxShaders.h"
 #include "gfx/GfxTrace.h"
+#include "gfx/GfxConfig.h"
 
 // Cache legado do motor (ZzzOpenglUtil.h). Usado apenas no trace de
 // diagnostico para comparar com o estado do modulo gfx.
 extern bool TextureEnable;
 extern bool AlphaTestEnable;
+extern float FPS;   // contador de FPS do cliente (steady_clock.cpp) - so usado no trace verbose
 
 namespace gfx
 {
+    // -----------------------------------------------------------------
+    // Profiling de performance (so ativo com --gfx-verbose).
+    // Mede o tempo de cada secao do caminho de desenho para localizar o
+    // gargalo com dados, em vez de especular.
+    // -----------------------------------------------------------------
+    struct PerfSample
+    {
+        double uniformsMs = 0.0;
+        double uploadMs = 0.0;
+        double drawMs = 0.0;
+        double matrixMs = 0.0;   // tempo em operacoes de matriz (Rotate/Translate/etc.)
+        double stateMs = 0.0;    // tempo em mudancas de estado (Enable/Bind/Blend/etc.)
+        unsigned long frames = 0;
+        unsigned long matrixCalls = 0;
+        unsigned long stateCalls = 0;
+    };
+
+    static PerfSample g_Perf;
+
+    inline double NowMs()
+    {
+        LARGE_INTEGER t;
+        QueryPerformanceCounter(&t);
+        static double s_Freq = 0.0;
+        if (s_Freq == 0.0)
+        {
+            LARGE_INTEGER f;
+            QueryPerformanceFrequency(&f);
+            s_Freq = static_cast<double>(f.QuadPart);
+        }
+        return static_cast<double>(t.QuadPart) / s_Freq * 1000.0;
+    }
+
     namespace
     {
         // Converte o modo de primitiva legado para o equivalente suportado
@@ -47,12 +82,36 @@ namespace gfx
     {
         Shutdown();
 
-        if (!m_Shader.Compile(kVertexShaderSource, kFragmentShaderSource, errorLog))
+        // Fase 2: usa bindless se o driver suportar e a config permitir.
+        // Tenta compilar o shader bindless; se falhar, cai para o classico.
+        m_UseBindless = Config::Instance().GetBindless() && (GLEW_ARB_bindless_texture != 0);
+        const char* fragment = m_UseBindless ? kFragmentShaderBindless : kFragmentShaderSource;
+        std::string bindlessError;
+        if (m_UseBindless && !m_Shader.Compile(kVertexShaderSource, fragment, bindlessError))
+        {
+            // Shader bindless nao compilou -> fallback classico (sem perder a mensagem original).
+            m_UseBindless = false;
+            fragment = kFragmentShaderSource;
+        }
+        if (!m_Shader.Compile(kVertexShaderSource, fragment, errorLog))
         {
             return false;
         }
+        m_TextureHandles.clear();
+        m_CurrentTextureHandle = 0;
 
-        if (!m_Buffer.Create(4096))
+        // O sampler classico le da unidade 0 (uma unica vez). No caminho
+        // bindless o uniform e uTextureHandle, definido por draw.
+        m_Shader.Use();
+        if (!m_UseBindless)
+        {
+            m_Shader.SetInt("uTexture", 0);
+        }
+
+        m_Buffer.SetMapped(Config::Instance().GetMapped());
+        // 4 regioes de 32768 vertices cada (131072 total): cada regiao comporta
+        // um frame inteiro (~6000 vertices expandidos) com folga.
+        if (!m_Buffer.Create(131072))
         {
             errorLog = "Falha ao criar VAO/VBO do renderer moderno.\r\n";
             m_Shader.Release();
@@ -67,6 +126,11 @@ namespace gfx
 
         m_Staging.clear();
         m_Staging.reserve(4096 * VERTEX_FLOATS);
+        m_Batch.clear();
+        m_Batch.reserve(8192 * VERTEX_FLOATS);
+        m_BatchEnabled = Config::Instance().GetBatch();
+        m_StateGen = 0;
+        m_BatchGen = 0;
 
         m_UniformsDirty = true;
         m_Modern = true;
@@ -222,6 +286,15 @@ namespace gfx
         return true;
     }
 
+    GLuint64 Renderer::SetTexture(GLuint name)
+    {
+        // Guarda o nome; o handle e criado lazy no primeiro desenho, quando
+        // a textura ja estiver completa (glGetTextureHandleARB retorna 0 para
+        // texturas incompletas).
+        m_CurrentBoundName = name;
+        return 0;
+    }
+
     GLint Renderer::currentProgram()
     {
         GLint program = 0;
@@ -236,11 +309,13 @@ namespace gfx
 
     void Renderer::SetMatrixMode(MatrixMode mode)
     {
+        if (m_BatchEnabled) { InvalidateBatch(); }
         m_CurrentMode = mode;
     }
 
     void Renderer::PushMatrix()
     {
+        if (m_BatchEnabled) { InvalidateBatch(); }
         switch (m_CurrentMode)
         {
         case MatrixMode::Projection: m_Projection.Push(); break;
@@ -252,6 +327,7 @@ namespace gfx
 
     void Renderer::PopMatrix()
     {
+        if (m_BatchEnabled) { InvalidateBatch(); }
         switch (m_CurrentMode)
         {
         case MatrixMode::Projection: m_Projection.Pop(); break;
@@ -263,6 +339,7 @@ namespace gfx
 
     void Renderer::LoadIdentity()
     {
+        if (m_BatchEnabled) { InvalidateBatch(); }
         switch (m_CurrentMode)
         {
         case MatrixMode::Projection: m_Projection.LoadIdentity(); break;
@@ -274,6 +351,7 @@ namespace gfx
 
     void Renderer::LoadMatrix(const float* columnMajor)
     {
+        if (m_BatchEnabled) { InvalidateBatch(); }
         if (columnMajor == nullptr)
         {
             return;
@@ -292,6 +370,7 @@ namespace gfx
 
     void Renderer::MultMatrix(const float* columnMajor)
     {
+        if (m_BatchEnabled) { InvalidateBatch(); }
         if (columnMajor == nullptr)
         {
             return;
@@ -308,6 +387,7 @@ namespace gfx
 
     void Renderer::Translatef(float x, float y, float z)
     {
+        if (m_BatchEnabled) { InvalidateBatch(); }
         switch (m_CurrentMode)
         {
         case MatrixMode::Projection: m_Projection.Translate(x, y, z); break;
@@ -319,6 +399,7 @@ namespace gfx
 
     void Renderer::Rotatef(float angle, float x, float y, float z)
     {
+        if (m_BatchEnabled) { InvalidateBatch(); }
         switch (m_CurrentMode)
         {
         case MatrixMode::Projection: m_Projection.Rotate(angle, x, y, z); break;
@@ -330,6 +411,7 @@ namespace gfx
 
     void Renderer::Scalef(float x, float y, float z)
     {
+        if (m_BatchEnabled) { InvalidateBatch(); }
         switch (m_CurrentMode)
         {
         case MatrixMode::Projection: m_Projection.Scale(x, y, z); break;
@@ -341,6 +423,7 @@ namespace gfx
 
     void Renderer::SetProjectionPerspective(float fovY, float aspect, float zNear, float zFar)
     {
+        if (m_BatchEnabled) { InvalidateBatch(); }
         // Equivalente a gluPerspective() no modo PROJECTION: a matriz do
         // topo e substituida (o glMultMatrix interno partiria da identidade).
         m_Projection.Load(MakePerspective(fovY, aspect, zNear, zFar));
@@ -348,6 +431,7 @@ namespace gfx
 
     void Renderer::SetProjectionOrtho2D(float left, float right, float bottom, float top)
     {
+        if (m_BatchEnabled) { InvalidateBatch(); }
         m_Projection.Load(MakeOrtho2D(left, right, bottom, top));
     }
 
@@ -380,9 +464,38 @@ namespace gfx
     {
         m_Shader.Use();
 
-        // Sampler: unidade 0. Definido explicitamente (o padrao do GLSL ja
-        // seria 0, mas explicitar evita qualquer duvida).
-        m_Shader.SetInt("uTexture", 0);
+        if (m_UseBindless)
+        {
+            // Cria o handle no primeiro DESENHO da textura (nao no BindTexture):
+            // glGetTextureHandleARB retorna 0 se a textura ainda nao estiver
+            // completa, e o jogo configura os parametros APOS o bind.
+            const GLuint bound = m_State.IsTextureEnabled() ? m_CurrentBoundName : 0;
+            if (bound != 0)
+            {
+                auto found = m_TextureHandles.find(bound);
+                if (found == m_TextureHandles.end())
+                {
+                    const GLuint64 h = glGetTextureHandleARB(bound);
+                    if (h != 0)
+                    {
+                        glMakeTextureHandleResidentARB(h);
+                        m_TextureHandles[bound] = h;
+                    }
+                    found = m_TextureHandles.find(bound);
+                }
+                m_CurrentTextureHandle = (found != m_TextureHandles.end()) ? found->second : 0;
+            }
+            else
+            {
+                m_CurrentTextureHandle = 0;
+            }
+
+            if (m_UniformsDirty || m_CurrentTextureHandle != m_LastTextureHandle)
+            {
+                m_Shader.SetHandle("uTextureHandle", m_CurrentTextureHandle);
+                m_LastTextureHandle = m_CurrentTextureHandle;
+            }
+        }
 
         // Matrizes
         const Mat4& projection = m_Projection.Top();
@@ -773,11 +886,108 @@ namespace gfx
     // Desenho
     // -----------------------------------------------------------------
 
+    void Renderer::AppendExpanded(std::vector<float>& out, GLenum mode,
+                                  const float* vertices, size_t vertexCount)
+    {
+        const size_t needed = out.size() + vertexCount * 3 * VERTEX_FLOATS;
+        if (out.capacity() < needed)
+        {
+            out.reserve(needed);
+        }
+
+        if (!NeedsTriangleExpansion(mode))
+        {
+            out.insert(out.end(), vertices, vertices + vertexCount * VERTEX_FLOATS);
+            return;
+        }
+        if (mode == GL_QUADS)
+        {
+            for (size_t i = 0; i + 3 < vertexCount; i += 4)
+            {
+                const float* quad[4] = {
+                    vertices + (i + 0) * VERTEX_FLOATS,
+                    vertices + (i + 1) * VERTEX_FLOATS,
+                    vertices + (i + 2) * VERTEX_FLOATS,
+                    vertices + (i + 3) * VERTEX_FLOATS
+                };
+                const float* tri1[3] = { quad[0], quad[1], quad[2] };
+                const float* tri2[3] = { quad[0], quad[2], quad[3] };
+                for (int t = 0; t < 2; ++t)
+                {
+                    for (int k = 0; k < 3; ++k)
+                    {
+                        const float* v = (t == 0) ? tri1[k] : tri2[k];
+                        out.insert(out.end(), v, v + VERTEX_FLOATS);
+                    }
+                }
+            }
+        }
+        else if (mode == GL_TRIANGLE_FAN)
+        {
+            for (size_t i = 1; i + 1 < vertexCount; ++i)
+            {
+                const float* tri[3] = {
+                    vertices + 0 * VERTEX_FLOATS,
+                    vertices + i * VERTEX_FLOATS,
+                    vertices + (i + 1) * VERTEX_FLOATS
+                };
+                for (int k = 0; k < 3; ++k)
+                {
+                    out.insert(out.end(), tri[k], tri[k] + VERTEX_FLOATS);
+                }
+            }
+        }
+        else // GL_POLYGON
+        {
+            for (size_t i = 0; i + 2 < vertexCount; i += 3)
+            {
+                const float* tri[3] = {
+                    vertices + (i + 0) * VERTEX_FLOATS,
+                    vertices + (i + 1) * VERTEX_FLOATS,
+                    vertices + (i + 2) * VERTEX_FLOATS
+                };
+                for (int k = 0; k < 3; ++k)
+                {
+                    out.insert(out.end(), tri[k], tri[k] + VERTEX_FLOATS);
+                }
+            }
+        }
+    }
+
+    void Renderer::FlushBatch()
+    {
+        if (m_Batch.empty())
+        {
+            return;
+        }
+        const size_t count = m_Batch.size() / VERTEX_FLOATS;
+        const GLint first = static_cast<GLint>(m_Buffer.Upload(m_Batch.data(), count));
+        if (first < 0) { m_Batch.clear(); return; }
+        m_Buffer.Draw(GL_TRIANGLES, first, static_cast<GLsizei>(count));
+        m_Batch.clear();
+        ++m_GlDrawCount;
+    }
+
     void Renderer::EmitPrimitive(GLenum mode, const float* vertices, size_t vertexCount)
     {
 
         static unsigned long s_DrawCount = 0;
         ++s_DrawCount;
+        if (gfx::TraceIsEnabled() && (s_DrawCount % 1000) == 0)
+        {
+            Trace("[gfx] FPS=%.1f prim=%lu glDraw=%llu\r\n",
+                  (double)FPS, s_DrawCount, m_GlDrawCount);
+            gfx::PerfReportAndReset();
+        }
+        if (gfx::TraceIsEnabled() && (s_DrawCount % 2000) == 0)
+        {
+            // Razao entre primitivas recebidas e draws GL emitidos: quanto
+            // maior, mais eficaz o batching (ex.: 5x = 5 primitivas/draw).
+            Trace("[gfx] batch: prim=%lu glDraw=%llu ratio=%.2f enabled=%d\r\n",
+                  s_DrawCount, m_GlDrawCount,
+                  m_GlDrawCount ? (float)s_DrawCount / (float)m_GlDrawCount : 0.0f,
+                  (int)m_BatchEnabled);
+        }
         if (gfx::TraceIsEnabled() && (s_DrawCount <= 60 || (s_DrawCount % 500) == 0))
         {
             GLint boundTex = 0;
@@ -795,8 +1005,43 @@ namespace gfx
                   (double)m_State.GetAlphaRef());
         }
 
+        const double t0 = gfx::TraceIsEnabled() ? gfx::NowMs() : 0.0;
         ApplyUniforms();
+        const double t1 = gfx::TraceIsEnabled() ? gfx::NowMs() : 0.0;
 
+        // ---- Batching (Fase 2) ----
+        // Acumula primitivas com o MESMO estado num unico draw. O estado
+        // e representado por m_StateGen: hooks no adapter incrementam o
+        // contador a cada mudanca (textura, blend, depth, matriz, ...).
+        // Quando a geracao muda, o lote anterior e desenhado antes de
+        // acumular os novos vertices.
+        if (m_BatchEnabled)
+        {
+            // Fecha o lote anterior se o estado mudou (defensivo: os hooks
+            // do adapter ja fazem isso no momento da mudanca).
+            if (!m_Batch.empty() && m_BatchGen != m_StateGen)
+            {
+                FlushBatch();
+            }
+            m_BatchGen = m_StateGen;
+
+            // Expande direto em m_Batch - sem copia intermediaria.
+            const size_t before = m_Batch.size();
+            AppendExpanded(m_Batch, mode, vertices, vertexCount);
+            if (m_Batch.size() == before)
+            {
+                return;
+            }
+
+            // Limita o tamanho do lote: evita um unico draw gigante.
+            if (m_Batch.size() >= 65536 * VERTEX_FLOATS)
+            {
+                FlushBatch();
+            }
+            return;
+        }
+
+        // ---- Caminho sem batching (Fase 1, comportamento original) ----
         if (!NeedsTriangleExpansion(mode))
         {
             const GLenum coreMode = ToCorePrimitive(mode);
@@ -804,8 +1049,19 @@ namespace gfx
             {
                 return;
             }
-            m_Buffer.Upload(vertices, vertexCount);
-            m_Buffer.Draw(coreMode, 0, static_cast<GLsizei>(vertexCount));
+            const GLint first = static_cast<GLint>(m_Buffer.Upload(vertices, vertexCount));
+            if (first < 0) { return; }
+            const double t2 = gfx::TraceIsEnabled() ? gfx::NowMs() : 0.0;
+            m_Buffer.Draw(coreMode, first, static_cast<GLsizei>(vertexCount));
+            if (gfx::TraceIsEnabled())
+            {
+                const double t3 = gfx::NowMs();
+                g_Perf.uniformsMs += (t1 - t0);
+                g_Perf.uploadMs += (t2 - t1);
+                g_Perf.drawMs += (t3 - t2);
+                ++g_Perf.frames;
+            }
+            ++m_GlDrawCount;
             return;
         }
 
@@ -885,7 +1141,26 @@ namespace gfx
         }
 
         const size_t expandedCount = expanded.size() / VERTEX_FLOATS;
-        m_Buffer.Upload(expanded.data(), expandedCount);
-        m_Buffer.Draw(GL_TRIANGLES, 0, static_cast<GLsizei>(expandedCount));
+        const GLint first = static_cast<GLint>(m_Buffer.Upload(expanded.data(), expandedCount));
+        if (first < 0) { return; }
+        const double t2 = gfx::TraceIsEnabled() ? gfx::NowMs() : 0.0;
+        m_Buffer.Draw(GL_TRIANGLES, first, static_cast<GLsizei>(expandedCount));
+        if (gfx::TraceIsEnabled())
+        {
+            const double t3 = gfx::NowMs();
+            g_Perf.uniformsMs += (t1 - t0);
+            g_Perf.uploadMs += (t2 - t1);
+            g_Perf.drawMs += (t3 - t2);
+            ++g_Perf.frames;
+            if ((g_Perf.frames % 2000) == 0)
+            {
+                Trace("[gfx] PERF/draw (us): uniforms=%.1f upload=%.1f draw=%.1f total=%.1f\r\n",
+                      g_Perf.uniformsMs * 1000.0 / g_Perf.frames,
+                      g_Perf.uploadMs * 1000.0 / g_Perf.frames,
+                      g_Perf.drawMs * 1000.0 / g_Perf.frames,
+                      (g_Perf.uniformsMs + g_Perf.uploadMs + g_Perf.drawMs) * 1000.0 / g_Perf.frames);
+            }
+        }
+        ++m_GlDrawCount;
     }
 }

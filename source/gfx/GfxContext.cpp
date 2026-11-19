@@ -386,6 +386,13 @@ namespace gfx
         outInfo.Modern = true;
 
         Trace("[gfx] contexto moderno criado: %s | %s", outInfo.Version.c_str(), outInfo.Renderer.c_str());
+
+        // Fase 1 do plano de FPS: qual caminho rapido o driver suporta?
+        Trace("[gfx] extensoes: bindless=%d multi_draw=%d buffer_storage=%d instancing=%d",
+              GLEW_ARB_bindless_texture ? 1 : 0,
+              GLEW_ARB_multi_draw_indirect ? 1 : 0,
+              GLEW_ARB_buffer_storage ? 1 : 0,
+              GLEW_ARB_draw_instanced ? 1 : 0);
         return true;
     }
 

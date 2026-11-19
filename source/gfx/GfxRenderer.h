@@ -28,6 +28,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "gfx/GfxBuffer.h"
 #include "gfx/GfxMath.h"
@@ -76,6 +77,16 @@ namespace gfx
         State& GetState() { return m_State; }
         const State& GetState() const { return m_State; }
 
+        Shader& GetShader() { return m_Shader; }
+        GfxBuffer& GetBuffer() { return m_Buffer; }
+
+        // ---------------- Bindless (Fase 2) ----------------
+        bool IsBindless() const { return m_UseBindless; }
+        // Registra a textura 'name' como atual e devolve seu handle 64-bit.
+        // Chamado pelo adapter em gfxGLBindTexture no caminho moderno.
+        GLuint64 SetTexture(GLuint name);
+        void SetBoundTextureName(GLuint name) { m_CurrentBoundName = name; }
+
         // ---------------- Modo imediato ----------------
         void Begin(GLenum mode);
         void End();
@@ -121,6 +132,17 @@ namespace gfx
         // "sem oclusao").
         bool ReadDepth(GLint x, GLint y, GLsizei width, GLsizei height, GLfloat* out);
 
+        // ---------------- Batching (Fase 2) ----------------
+        // Chamado pelo adapter quando o estado muda: desenha o lote acumulado
+        // antes que a mudanca seja aplicada (textura/blend/matriz/etc.).
+        void FlushBatch();
+        void InvalidateBatch()
+        {
+            FlushBatch();
+            ++m_StateGen;
+        }
+        bool IsBatching() const { return m_BatchEnabled; }
+
     private:
         Renderer() = default;
 
@@ -128,6 +150,10 @@ namespace gfx
 
         // Modo imediato: concatena vertices num buffer de staging.
         void AppendVertex(float x, float y, float z);
+
+        // Expande QUADS/FAN/POLYGON em triangulos dentro de 'out'.
+        void AppendExpanded(std::vector<float>& out, GLenum mode,
+                            const float* vertices, size_t vertexCount);
 
         // Client arrays: le os arrays do cliente e monta o staging.
         void BuildFromClientArrays(GLenum mode, GLint first, GLsizei count);
@@ -151,12 +177,25 @@ namespace gfx
         Shader   m_Shader;
         GfxBuffer m_Buffer;
 
+        // Bindless textures (Fase 2): nome GL -> handle 64-bit residente.
+        bool m_UseBindless = false;
+        GLuint m_CurrentBoundName = 0;          // ultimo nome ligado pelo jogo
+        GLuint64 m_CurrentTextureHandle = 0;
+        std::unordered_map<GLuint, GLuint64> m_TextureHandles;
+
         // Modo imediato
         bool   m_ImmediateActive = false;
         GLenum m_ImmediateMode = GL_TRIANGLES;
         std::vector<float> m_Staging;
         // Buffer reaproveitado da expansao QUADS/FAN -> triangulos.
         std::vector<float> m_Expanded;
+
+        // Batching: vertices acumulados do lote corrente.
+        std::vector<float> m_Batch;
+        bool   m_BatchEnabled = false;
+        unsigned long long m_StateGen = 0;   // incrementado a cada mudanca de estado
+        unsigned long long m_BatchGen = 0;   // geracao do lote acumulado
+        unsigned long long m_GlDrawCount = 0; // draws GL emitidos (para medir batching)
 
         // Atributos correntes (persistentes entre Begin/End, como no GL 1.1).
         float m_CurrentVertex[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -180,6 +219,7 @@ namespace gfx
         // Cache das uniforms para evitar glUniform* redundante.
         bool  m_UniformsDirty = true;
         GLint m_LastUseTexture = -1;
+        GLuint64 m_LastTextureHandle = 0xFFFFFFFFFFFFFFFFULL;
         GLint m_LastTexEnvMode = -1;
         GLint m_LastUseAlphaTest = -1;
         GLint m_LastAlphaFunc = -1;

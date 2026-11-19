@@ -56,6 +56,9 @@ namespace gfx
         bool      GetWidescreen() const { return m_Widescreen; }
         bool      GetVerbose()    const { return m_Verbose; }
         bool      GetCoreProfile() const { return m_CoreProfile; }
+        bool      GetBatch()       const { return m_Batch; }
+        bool      GetMapped()      const { return m_Mapped; }
+        bool      GetBindless()    const { return m_Bindless; }
 
         bool IsModern() const { return m_Backend == Backend::Modern; }
         bool IsLegacy() const { return m_Backend == Backend::Legacy; }
@@ -85,6 +88,12 @@ namespace gfx
         bool      m_Widescreen = false;
         bool      m_Verbose    = false;
         bool      m_CoreProfile = false;
+        // Fase 2: Mapped DESLIGADO. Aumenta FPS (14->23) mas CORROMPE a imagem
+        // neste driver Intel (faixas brancas, cenario some) mesmo com fences
+        // e 4 regioes. Apresentacao identica e requisito absoluto.
+        bool      m_Batch       = false;
+        bool      m_Mapped      = false;
+        bool      m_Bindless    = false;
         bool      m_Loaded     = false;
 
         std::string m_IniPath      = "Graphics.ini";

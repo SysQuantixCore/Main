@@ -229,6 +229,9 @@ namespace gfx
         ReadIniBool("Graphics", "Widescreen", false, m_Widescreen);
         ReadIniBool("Graphics", "Verbose", false, m_Verbose);
         ReadIniBool("Graphics", "CoreProfile", false, m_CoreProfile);
+        ReadIniBool("Graphics", "Batch", true, m_Batch);
+        ReadIniBool("Graphics", "Mapped", true, m_Mapped);
+        ReadIniBool("Graphics", "Bindless", true, m_Bindless);
     }
 
     void Config::ApplyCommandLine()
@@ -278,6 +281,24 @@ namespace gfx
         {
             m_Widescreen = !(EqualsNoCase(value.c_str(), "0") || EqualsNoCase(value.c_str(), "false") ||
                              EqualsNoCase(value.c_str(), "off"));
+        }
+
+        if (FindCommandLineArg("batch", value, hasValue) && hasValue)
+        {
+            m_Batch = !(EqualsNoCase(value.c_str(), "0") || EqualsNoCase(value.c_str(), "false") ||
+                        EqualsNoCase(value.c_str(), "off"));
+        }
+
+        if (FindCommandLineArg("mapped", value, hasValue) && hasValue)
+        {
+            m_Mapped = !(EqualsNoCase(value.c_str(), "0") || EqualsNoCase(value.c_str(), "false") ||
+                         EqualsNoCase(value.c_str(), "off"));
+        }
+
+        if (FindCommandLineArg("bindless", value, hasValue) && hasValue)
+        {
+            m_Bindless = !(EqualsNoCase(value.c_str(), "0") || EqualsNoCase(value.c_str(), "false") ||
+                           EqualsNoCase(value.c_str(), "off"));
         }
 
         if (CommandLineFlag("gfx-verbose"))

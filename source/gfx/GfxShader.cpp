@@ -68,6 +68,8 @@ namespace gfx
             m_FragmentShader = 0;
         }
         m_UniformCache.clear();
+        // O programa foi deletado: forca um glUseProgram na proxima vez.
+        m_LastUsedProgram = 0xFFFFFFFF;
     }
 
     bool Shader::Compile(const char* vertexSource, const char* fragmentSource, std::string& errorLog)
@@ -129,9 +131,10 @@ namespace gfx
 
     void Shader::Use() const
     {
-        if (m_Program != 0)
+        if (m_Program != 0 && m_LastUsedProgram != m_Program)
         {
             glUseProgram(m_Program);
+            m_LastUsedProgram = m_Program;
         }
     }
 
@@ -183,6 +186,15 @@ namespace gfx
         if (location >= 0)
         {
             glUniformMatrix4fv(location, 1, GL_FALSE, value);
+        }
+    }
+
+    void Shader::SetHandle(const char* name, GLuint64 value)
+    {
+        const GLint location = GetLocation(name);
+        if (location >= 0)
+        {
+            glUniformHandleui64ARB(location, value);
         }
     }
 }

@@ -776,6 +776,24 @@ namespace
 		}
 	}
 
+	void RegReadOrCreateDwordDefault(HKEY hKey, const char* valueName, int& outValue, int defaultValue)
+	{
+		DWORD type = 0;
+		DWORD data = 0;
+		DWORD cb = sizeof(DWORD);
+
+		if (RegQueryValueEx(hKey, valueName, 0, &type, (LPBYTE)&data, &cb) == ERROR_SUCCESS
+			&& type == REG_DWORD)
+		{
+			outValue = (data != 0) ? 1 : 0;
+			return;
+		}
+
+		outValue = (defaultValue != 0) ? 1 : 0;
+		DWORD dw = (DWORD)outValue;
+		RegSetValueEx(hKey, valueName, 0, REG_DWORD, (const BYTE*)&dw, sizeof(dw));
+	}
+
 	void RegReadStringOrDefault(HKEY hKey, const char* valueName, char* outBuffer, DWORD bufferSize, const char* defaultValue)
 	{
 		DWORD size = bufferSize;
@@ -846,7 +864,6 @@ BOOL OpenInitFile()
 	memset(m_ID, 0, sizeof(m_ID));
 	memset(m_Psz, 0, sizeof(m_Psz));
 
-	// FIX: hKey era usado não-inicializado em RegCloseKey() quando RegCreateKeyEx falhava.
 	HKEY hKey = NULL;
 	DWORD dwDisp;
 	DWORD dwSize;
@@ -869,7 +886,10 @@ BOOL OpenInitFile()
 		RegQueryValueEx(hKey, "ID", 0, NULL, (LPBYTE)m_ID[MAX_ACCOUNT_REG], &dwSize);
 
 		RegReadIntOrDefault(hKey, "SoundOnOff", m_SoundOnOff, true);
-		RegReadIntOrDefault(hKey, "MusicOnOff", m_MusicOnOff, false);
+
+		// Música ligada por padrão e gravada no registro na primeira execução
+		RegReadOrCreateDwordDefault(hKey, "MusicOnOff", m_MusicOnOff, 1);
+
 		RegReadIntOrDefault(hKey, "Resolution", m_Resolution, 1);
 		RegReadIntOrDefault(hKey, "ColorDepth", m_nColorDepth, 0);
 		RegReadIntOrDefault(hKey, "TextOut", g_iRenderTextType, 0);

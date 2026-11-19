@@ -231,6 +231,12 @@ namespace SEASON3B
 		void RenderListBox();
 		void RenderDisplayItems();
 
+		void UpdateItemToolTip();
+		void RenderItemToolTip();
+		void DeleteItemToolTip();
+		bool GetDisplayItemRect(int iIndex, RECT& rcItem) const;
+		bool GetDisplayItemOption(int iIndex, OUT CASH_SHOP_PRODUCT_OPTION& info) const;
+
 		void RenderBanner();
 		bool UpdateBanner();
 		
@@ -267,6 +273,10 @@ namespace SEASON3B
 		bool	m_bRequestCurrentPage;
 
 		CUIInGameShopListBox	m_StorageItemListBox;
+
+		ITEM*	m_pToolTipItem;				// Item temporario usado pelo tooltip do Cash Shop
+		WORD	m_wToolTipItemType;			// Codigo do item exibido no tooltip
+		int		m_iPointedDisplayItemIndex;	// Slot do Cash Shop sob o mouse
 	};
 }
 	

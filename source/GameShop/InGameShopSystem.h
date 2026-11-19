@@ -19,6 +19,33 @@ typedef std::list<CShopPackage>			type_listPackage;
 typedef std::map<int, int>				type_mapZoneSeq;
 typedef std::list<unicode::t_string>	type_listName;
 
+// Atributos do item definidos no CashShopProduct.txt do servidor (level, opcoes, etc.)
+struct CASH_SHOP_PRODUCT_OPTION
+{
+	int iProductSeq;
+	int iItemIndex;
+	int iLevel;
+	int iSkill;
+	int iLuck;
+	int iOption;
+	int iExOpt;
+	int iAncOp;
+	int iJoh;
+	int iOexe;
+	int iSocket[5];
+	int iQuantity;
+	int iDuration;
+
+	CASH_SHOP_PRODUCT_OPTION()
+	{
+		memset(this, 0, sizeof(CASH_SHOP_PRODUCT_OPTION));
+		for (int i = 0; i < 5; i++)
+			iSocket[i] = 255;
+	}
+};
+
+typedef std::map<int, CASH_SHOP_PRODUCT_OPTION>	type_mapProductOption;
+
 class CInGameShopSystem
 {
 public:
@@ -94,6 +121,10 @@ public:
 	int GetSizePackageAsDisplayPackage();
 
 	WORD GetPackageItemCode(int iIndex);
+
+	void LoadProductOption(const char* szFilePath);
+	bool GetProductOption(int iProductSeq, OUT CASH_SHOP_PRODUCT_OPTION& info) const;
+	bool GetProductOptionByItemCode(int iItemCode, OUT CASH_SHOP_PRODUCT_OPTION& info) const;
 
 	type_listName GetZoneName();
 	type_listName GetCategoryName();
@@ -186,6 +217,7 @@ protected:
  	int						m_iSelectedPage;
 
 	type_mapZoneSeq			m_mapZoneSeqIndex;
+	type_mapProductOption	m_mapProductOption;
 	type_listPackage		m_listDisplayPackage;
 	type_listPackage		m_listNormalPackage;
 	type_listPackage		m_listEventPackage;

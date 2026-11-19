@@ -32,4 +32,7 @@ namespace gfx
 
     // Fragment shader: amostragem de textura, environment, alpha test e fog.
     extern const char* const kFragmentShaderSource;
+
+    // Fragment shader com bindless textures (GL_ARB_bindless_texture).
+    extern const char* const kFragmentShaderBindless;
 }

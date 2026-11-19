@@ -77,5 +77,17 @@ namespace gfx
         extern GLboolean (APIENTRY *fnIsEnabled)(GLenum cap);
         extern void (APIENTRY *fnReadPixels)(GLint x, GLint y, GLsizei width, GLsizei height,
                                              GLenum format, GLenum type, void* pixels);
+
+        // ---------------- Estado cru (para o batching invalidar o lote) ----------------
+        extern void (APIENTRY *fnBindTexture)(GLenum target, GLuint texture);
+        extern void (APIENTRY *fnBlendFunc)(GLenum sfactor, GLenum dfactor);
+        extern void (APIENTRY *fnDepthFunc)(GLenum func);
+        extern void (APIENTRY *fnDepthMask)(GLboolean flag);
+        extern void (APIENTRY *fnViewport)(GLint x, GLint y, GLsizei width, GLsizei height);
+        extern void (APIENTRY *fnScissor)(GLint x, GLint y, GLsizei width, GLsizei height);
+        extern void (APIENTRY *fnColorMask)(GLboolean r, GLboolean g, GLboolean b, GLboolean a);
+        extern void (APIENTRY *fnFrontFace)(GLenum mode);
+        extern void (APIENTRY *fnClear)(GLbitfield mask);
+        extern void (APIENTRY *fnFlush)(void);
     }
 }
