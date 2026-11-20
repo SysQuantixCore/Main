@@ -330,7 +330,8 @@ DWORD CHARACTER::GetColorID()
 	switch (Style)
 	{
 	case 0:
-		Hex = 0xFF00FF96;
+		// Jogador normal: branco (cor original), com alfa opaco.
+		Hex = 0xFFFFFFFF;
 		break;
 	case PVP_HERO2:
 		Hex = 0xFFEE8C56;

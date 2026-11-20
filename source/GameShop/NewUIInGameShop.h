@@ -274,6 +274,10 @@ namespace SEASON3B
 
 		CUIInGameShopListBox	m_StorageItemListBox;
 
+		// Cache dos atributos dos itens exibidos (evita lookup no mapa a cada frame).
+		mutable CASH_SHOP_PRODUCT_OPTION m_aCachedOptions[INGAMESHOP_DISPLAY_ITEMLIST_SIZE];
+		mutable int			m_iCachedProductSeq[INGAMESHOP_DISPLAY_ITEMLIST_SIZE];
+
 		ITEM*	m_pToolTipItem;				// Item temporario usado pelo tooltip do Cash Shop
 		WORD	m_wToolTipItemType;			// Codigo do item exibido no tooltip
 		int		m_iPointedDisplayItemIndex;	// Slot do Cash Shop sob o mouse

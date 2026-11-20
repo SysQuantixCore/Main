@@ -9,7 +9,7 @@ namespace SEASON3B
 		virtual~CNewUIListGroupButton();
 		void clear();
 		void push_back(std::string psText);
-		void Create(int x, int y, int max, int imgindex = BITMAP_btn_empty_very_small, int width = 54, int height = 23, int distance = 2);
+		void Create(int x, int y, int max, int imgindex = BITMAP_btn_empty_very_small, int width = 54, int height = 23, int distance = 2, int textureFrameHeight = 0);
 		void SetPosition(int x, int y);
 		void Render();
 		bool UpdateMouseEvent();
@@ -22,6 +22,7 @@ namespace SEASON3B
 		POINT m_ButtonSize;
 		int m_distance;
 		int m_imageIndex;
+		int m_iTextureFrameHeight;
 
 		int m_iViewCount;
 		int m_trgCurrent;

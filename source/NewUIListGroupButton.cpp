@@ -15,6 +15,7 @@ SEASON3B::CNewUIListGroupButton::CNewUIListGroupButton()
 	m_ButtonSize.x = 54;
 	m_ButtonSize.y = 23;
 	m_imageIndex = BITMAP_btn_empty_very_small;
+	m_iTextureFrameHeight = 0;
 }
 
 SEASON3B::CNewUIListGroupButton::~CNewUIListGroupButton()
@@ -33,7 +34,7 @@ void SEASON3B::CNewUIListGroupButton::push_back(std::string psText)
 	textList.push_back(psText);
 }
 
-void SEASON3B::CNewUIListGroupButton::Create(int x, int y, int max, int imgindex, int width, int height, int distance)
+void SEASON3B::CNewUIListGroupButton::Create(int x, int y, int max, int imgindex, int width, int height, int distance, int textureFrameHeight)
 {
 	m_Pos.x = x;
 	m_Pos.y = y;
@@ -43,6 +44,9 @@ void SEASON3B::CNewUIListGroupButton::Create(int x, int y, int max, int imgindex
 	m_ButtonSize.x = width;
 	m_ButtonSize.y = height;
 	m_imageIndex = imgindex;
+	// UV dos estados (normal/hover/pressed) e baseado na altura do FRAME da
+	// textura, nao na altura de renderizacao do botao.
+	m_iTextureFrameHeight = (textureFrameHeight > 0) ? textureFrameHeight : height;
 
 	m_pScrollBar.Create(x + (width + distance), y, (max * (height + 1)));
 	m_pScrollBar.SetPercent(0);
@@ -173,20 +177,21 @@ std::string SEASON3B::CNewUIListGroupButton::as_string()
 void SEASON3B::CNewUIListGroupButton::RenderButton(int image, float x, float y, std::string text, bool select)
 {
 	float uv = 0.0;
+	const int iFrameH = (m_iTextureFrameHeight > 0) ? m_iTextureFrameHeight : m_ButtonSize.y;
 
 	if (select == false)
 	{
 		if (SEASON3B::CheckMouseIn((int)x, (int)y, m_ButtonSize.x, m_ButtonSize.y))
 		{
 			if (MouseLButton)
-				uv = (float)(m_ButtonSize.y * 2);
+				uv = (float)(iFrameH * 2);
 			else
-				uv = (float)m_ButtonSize.y;
+				uv = (float)iFrameH;
 		}
 	}
 	else
 	{
-		uv = (float)(m_ButtonSize.y * 2);
+		uv = (float)(iFrameH * 2);
 	}
 
 	SEASON3B::RenderImage(image, x, y, (float)m_ButtonSize.x, (float)m_ButtonSize.y, 0.0, uv);

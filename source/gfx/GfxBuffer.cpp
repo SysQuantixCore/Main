@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "gfx/GfxBuffer.h"
 #include "gfx/GfxRawGL.h"
+#include "gfx/GfxTrace.h"
 
 #include <cstring>
 
@@ -48,11 +49,13 @@ namespace gfx
                                     (glBufferStorage != nullptr);
             if (hasStorage)
             {
-                // IMPORTANTE: NAO usar GL_MAP_COHERENT_BIT. Alguns drivers Intel
-                // entregam dados corrompidos com coerencia automatica em buffers
-                // persistentemente mapeados. Sem COHERENT, tornamos cada escrita
-                // visivel explicitamente com glFlushMappedBufferRange no Upload.
-                const GLbitfield flags = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT;
+                // Tentativa: COM COHERENT + flush explicito. O driver Intel
+                // rejeita glFlushMappedBufferRange (0x0502) em mapas PERSISTENT
+                // sem COHERENT, entao a escrita nao fica visivel. Com COHERENT
+                // o flush e redundante mas inofensivo; o bind do VBO (correcao
+                // anterior) pode ter sido a causa real da corrupcao.
+                const GLbitfield flags = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT |
+                                         GL_MAP_COHERENT_BIT;
                 glBufferStorage(GL_ARRAY_BUFFER,
                                 static_cast<GLsizeiptr>(initialVertexCapacity * kVertexStride),
                                 nullptr, flags);

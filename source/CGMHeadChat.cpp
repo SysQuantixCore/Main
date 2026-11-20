@@ -14,6 +14,7 @@
 
 #include "CGMFontLayer.h"
 #include "CGMItemMng.h"
+#include "ZzzInfomation.h"
 
 CGMHeadChat::CGMHeadChat() :Chat(MAX_CHAT)
 {
@@ -750,8 +751,14 @@ void CGMHeadChat::RenderBoolean(int x, int y, CHAT* c)
 			bGmMode = true;
 		}
 
-		RenderPos.x += (RenderBoxSize.cx * 0.5);
-		RenderPos.y -= iLineHeight;
+		RenderPos.x += (RenderBoxSize.cx * 0.5f);
+
+		// Coordenadas explicitas: RenderPos.x e o CENTRO, o renderizador de UI
+		// espera a borda esquerda quando usa RT3_SORT_CENTER.
+		const float fTextX = RenderPos.x - (RenderBoxSize.cx * 0.5f);
+		const float fNameY = RenderPos.y - iLineHeight;
+		const bool bNameWave = GMProtect->IsRenderWave(c->ID);
+		const int iMessageLines = (c->LifeTime[1] > 0) ? 2 : 1;
 
 		if (pCharacter->GetKind() == KIND_PLAYER && MODEL_PLAYER == pCharacter->Object.Type)
 		{
@@ -760,59 +767,23 @@ void CGMHeadChat::RenderBoolean(int x, int y, CHAT* c)
 				if (pCharacter->GuildStatus != G_NONE && pCharacter->GuildMarkIndex != -1)
 				{
 					CreateGuildMark(pCharacter->GuildMarkIndex, true);
-					RenderBitmap(BITMAP_GUILD, (float)RenderPos.x + 60.f, (float)(RenderPos.y - iLineHeight) + 5, 32.f, 32.f, 0.0, 0.0, 1.f, 1.f, false, false);
+					RenderBitmap(BITMAP_GUILD, (float)RenderPos.x + 60.f, (float)(fNameY - iLineHeight) + 5, 32.f, 32.f, 0.0, 0.0, 1.f, 1.f, false, false);
 				}
 			}
 
 			if (pCharacter->m_byGensInfluence != GENS_TYPE_NONE)
 			{
-				RenderGensMark(pCharacter->m_byGensInfluence, pCharacter->m_byRankIndex, RenderPos.x, (RenderPos.y + iLineHeight));
+				RenderGensMark(pCharacter->m_byGensInfluence, pCharacter->m_byRankIndex, RenderPos.x, (fNameY + iLineHeight));
 			}
 		}
-
-		g_pRenderText->SetTextColor(pCharacter->GetColorID());
-
-		if (GMProtect->IsRenderWave(c->ID))
-		{
-			GMFontLayer->RenderWave(RenderPos.x, RenderPos.y, c->ID, 0, iLineHeight, RT3_WRITE_CENTER, NULL);
-		}
-		else
-		{
-			GMFontLayer->RenderText(RenderPos.x, RenderPos.y, c->ID, 0, iLineHeight, RT3_WRITE_CENTER);
-		}
-		RenderPos.y -= iLineHeight;
-
-		if (c->Guild && c->Guild[0])
-		{
-			g_pRenderText->SetTextColor(pCharacter->GetRelationShipTextColor());
-			GMFontLayer->RenderText(RenderPos.x, RenderPos.y, c->Guild, 0, iLineHeight, RT3_WRITE_CENTER);
-		}
-
-		RenderPos.y -= iLineHeight;
-
-#if MAIN_UPDATE <= 303
-		if (pCharacter->GetKind() == KIND_PLAYER)
-		{
-			int iSelectedCharacter = gmCharacters->GetCharacterIndex(pCharacter);
-
-			if (SelectedCharacter != -1 && iSelectedCharacter == SelectedCharacter)
-			{
-				g_pBuffWindow->RenderBuffStatus(RenderPos.x / g_fScreenRate_x, RenderPos.y / g_fScreenRate_y, &pCharacter->Object);
-			}
-		}
-#endif
 
 		DWORD dwTextColor[2];
 		BYTE byAlpha[2] = { 255, 255 };
 
 		if (c->LifeTime[0] > 0 && c->LifeTime[0] < 10)
-		{
 			byAlpha[0] = 128;
-		}
 		if (c->LifeTime[1] > 0 && c->LifeTime[1] < 10)
-		{
 			byAlpha[1] = 128;
-		}
 
 		if (bGmMode)
 		{
@@ -821,41 +792,120 @@ void CGMHeadChat::RenderBoolean(int x, int y, CHAT* c)
 		}
 		else
 		{
-			dwTextColor[0] = RGBA(230, 220, 200, byAlpha[0]);
-			dwTextColor[1] = RGBA(230, 220, 200, byAlpha[1]);
+			dwTextColor[0] = RGBA(255, 255, 255, byAlpha[0]);
+			dwTextColor[1] = RGBA(255, 255, 255, byAlpha[1]);
 		}
 
-		if (c->LifeTime[1] > 0 || c->LifeTime[0] > 0)
+		// Com mensagem: nome vai dentro do balao, com barra azul-claro.
+		// Sem mensagem: nome avulso acima do personagem, sem fundo.
+		const bool bHasMessage = (c->LifeTime[1] > 0 || c->LifeTime[0] > 0);
+
+		if (bHasMessage)
 		{
-			float RenderPosY = RenderPos.y;
-			float RenderPosX = RenderPos.x;
-			float RenderSizeY = (iLineHeight * 2);
-			float RenderSizeX = (RenderBoxSize.cx + 16.f);
+			const float fBalloonW = (float)RenderBoxSize.cx + 16.f;
+			const float fBalloonH = (float)((iMessageLines + 1) * iLineHeight) + 8.f;
+			const float fBalloonX = RenderPos.x - (fBalloonW * 0.5f);
+			const float fBalloonY = fNameY - 4.f;
 
-			if (c->LifeTime[1] > 0)
-			{
-				RenderSizeY += iLineHeight;
-			}
-			RenderPosX -= (RenderSizeX / 2.f);
-			RenderPosY -= (RenderSizeY / 2.f);
-
-			g_pNameWindow->RenderTooltip(RenderPosX, RenderPosY, RenderSizeX, RenderSizeY);
+			g_pNameWindow->RenderTooltip(fBalloonX, fBalloonY, fBalloonW, fBalloonH);
 		}
+		else
+		{
+			g_pRenderText->SetBgColor(0);
+		}
+
+		// Nome centralizado, branco e em negrito (aspecto mais limpo/profissional).
+		HFONT hOldFont = g_pRenderText->GetFont();
+		g_pRenderText->SetFont(g_hFontBold);
+		g_pRenderText->SetTextColor(255, 255, 255, 255);
+
+		// Fora do balao, o nome do jogador local mostra o Level.
+		// Dentro do balao de chat permanece apenas o nome.
+		char szNameText[128] = { 0, };
+		const char* pszName = c->ID;
+
+		if (!bHasMessage && Hero != NULL && CharacterAttribute != NULL && c->Owner == Hero)
+		{
+			_sntprintf(szNameText, 128, _T("%s | Level: %d"), c->ID, (int)CharacterAttribute->Level);
+			pszName = szNameText;
+		}
+
+		// Folga extra para nao cortar a ultima letra do nickname (e o sufixo
+		// " | Level: X" quando o nome esta fora do balao).
+		const float fNameBoxWidth = (pszName == c->ID)
+			? (float)RenderBoxSize.cx + 20.f
+			: (float)RenderBoxSize.cx + 90.f;
+
+		const float fNameDrawX = fTextX - (fNameBoxWidth - RenderBoxSize.cx) * 0.5f;
+
+		// Barra azul do nome: menor que o balao, com brilho em cima/esquerda
+		// e sombra embaixo/direita para dar profundidade.
+		if (bHasMessage)
+		{
+			const float fBarX = fNameDrawX + 3.f;
+			const float fBarY = fNameY + 1.f;
+			const float fBarW = fNameBoxWidth - 6.f;
+			const float fBarH = (float)iLineHeight - 1.f;
+
+			EnableAlphaTest();
+
+			// Scale=false: as coordenadas do nome ja estao em pixels de tela,
+			// o RenderTextClipped nao aplica g_fScreenRate.
+			glColor4f(0.35f, 0.68f, 1.00f, 0.85f);
+			RenderColor(fBarX, fBarY, fBarW, fBarH, 0.f, 0, false);
+
+			glColor4f(0.70f, 0.90f, 1.00f, 0.95f);
+			RenderColor(fBarX, fBarY, fBarW, 1.f, 0.f, 0, false);
+			RenderColor(fBarX, fBarY, 1.f, fBarH, 0.f, 0, false);
+
+			glColor4f(0.08f, 0.30f, 0.65f, 0.95f);
+			RenderColor(fBarX, fBarY + fBarH - 1.f, fBarW, 1.f, 0.f, 0, false);
+			RenderColor(fBarX + fBarW - 1.f, fBarY, 1.f, fBarH, 0.f, 0, false);
+
+			EndRenderColor();
+		}
+
+		if (bNameWave)
+			g_pRenderText->RenderWave(fNameDrawX, fNameY, pszName, fNameBoxWidth, iLineHeight, RT3_SORT_CENTER, NULL, strlen(pszName), false);
+		else
+			g_pRenderText->RenderTextClipped(fNameDrawX, fNameY, pszName, fNameBoxWidth, iLineHeight, RT3_SORT_CENTER);
+
+		g_pRenderText->SetFont(hOldFont);
+		g_pRenderText->SetBgColor(0);
+
+		if (c->Guild && c->Guild[0])
+		{
+			g_pRenderText->SetTextColor(pCharacter->GetRelationShipTextColor());
+			g_pRenderText->RenderTextClipped(fTextX, fNameY + (iMessageLines + 1) * iLineHeight, c->Guild, RenderBoxSize.cx, iLineHeight, RT3_SORT_CENTER);
+		}
+
+#if MAIN_UPDATE <= 303
+		if (pCharacter->GetKind() == KIND_PLAYER)
+		{
+			int iSelectedCharacter = gmCharacters->GetCharacterIndex(pCharacter);
+
+			if (SelectedCharacter != -1 && iSelectedCharacter == SelectedCharacter)
+			{
+				g_pBuffWindow->RenderBuffStatus(RenderPos.x / g_fScreenRate_x, fNameY / g_fScreenRate_y, &pCharacter->Object);
+			}
+		}
+#endif
+
+		// Mensagens abaixo do nome, dentro do balao.
+		const float fMessageY = fNameY + iLineHeight;
 
 		if (c->LifeTime[1] > 0)
 		{
 			g_pRenderText->SetTextColor(dwTextColor[0]);
-			GMFontLayer->RenderText(RenderPos.x, RenderPos.y, c->Text[0], 0, iLineHeight, RT3_WRITE_CENTER);
+			g_pRenderText->RenderTextClipped(fTextX, fMessageY, c->Text[0], RenderBoxSize.cx, iLineHeight, RT3_SORT_CENTER);
 
-			RenderPos.y -= iLineHeight;
 			g_pRenderText->SetTextColor(dwTextColor[1]);
-			GMFontLayer->RenderText(RenderPos.x, RenderPos.y, c->Text[1], 0, iLineHeight, RT3_WRITE_CENTER);
+			g_pRenderText->RenderTextClipped(fTextX, fMessageY + iLineHeight, c->Text[1], RenderBoxSize.cx, iLineHeight, RT3_SORT_CENTER);
 		}
 		else if (c->LifeTime[0] > 0)
 		{
-			RenderPos.y -= (iLineHeight / 2.f);
 			g_pRenderText->SetTextColor(dwTextColor[0]);
-			GMFontLayer->RenderText(RenderPos.x, RenderPos.y, c->Text[0], 0, iLineHeight, RT3_WRITE_CENTER);
+			g_pRenderText->RenderTextClipped(fTextX, fMessageY, c->Text[0], RenderBoxSize.cx, iLineHeight, RT3_SORT_CENTER);
 		}
 	}
 	else
@@ -1010,8 +1060,8 @@ void CGMHeadChat::RenderBoolean(int x, int y, CHAT* c)
 		}
 		else
 		{
-			dwTextColor[0] = RGBA(230, 220, 200, byAlpha[0]);
-			dwTextColor[1] = RGBA(230, 220, 200, byAlpha[1]);
+			dwTextColor[0] = RGBA(255, 255, 255, byAlpha[0]);
+			dwTextColor[1] = RGBA(255, 255, 255, byAlpha[1]);
 		}
 
 		if (c->LifeTime[1] > 0)

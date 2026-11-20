@@ -18,6 +18,61 @@ using namespace SEASON3B;
 extern std::string g_strSelectedML;
 extern char g_aszMLSelection[4];
 
+namespace
+{
+	// Layout do menu de opcoes (coordenadas logicas).
+	const float OPT_WINDOW_W = 260.f;
+	const float OPT_WINDOW_H = 312.f;
+
+	// Botao com a altura CHEIA do frame da textura (23 px) para as bordas
+	// ficarem completamente visiveis; cada item ocupa 24 px (23 + 1 de gap).
+	// Resolucao: 4 itens = 96 px; Fonte/Idioma: 3 itens = 72 px.
+	const float OPT_LIST_X = 17.f;
+	const float OPT_RES_LIST_Y = 38.f;
+	const float OPT_FONT_LIST_Y = 140.f;
+	const float OPT_LANG_LIST_Y = 224.f;
+
+	const float OPT_RES_HEADER_Y = 30.f;
+	const float OPT_FONT_HEADER_Y = 132.f;
+	const float OPT_LANG_HEADER_Y = 216.f;
+
+	// Coluna direita distribuida ao longo da janela.
+	const float OPT_CHECK_X = 210.f;
+	const float OPT_CHECK_Y = 34.f;
+	const float OPT_CHECK_STEP = 18.f;
+
+	const float OPT_VOLUME_Y = 210.f;
+	const float OPT_EFFECT_Y = 254.f;
+
+	// Largura/altura NATURAIS do frame da textura (54x23). Usar valores
+	// menores faz o RenderImage amostrar apenas parte da textura e a borda
+	// direita/inferior do botao desaparecer.
+	const float OPT_LIST_BTN_W = 54.f;
+	const float OPT_LIST_BTN_H = 23.f;
+	// Gap maior para a barra de rolagem (15px) nao colar nos botoes.
+	const float OPT_LIST_BTN_GAP = 8.f;
+
+	// Fundo: 2px margem + 54 botao + 8 gap + 15 scrollbar + 3 margem = 82.
+	const float OPT_TABLE_W = 82.f;
+
+	// Botao de fechar (X) dentro da barra de titulo.
+	const float OPT_CLOSE_X = OPT_WINDOW_W - 32.f;
+	const float OPT_CLOSE_Y = 5.f;
+	const float OPT_CLOSE_SIZE = 15.f;
+
+	void RenderSectionSeparator(float x, float y, float width)
+	{
+		// Linha dourada discreta abaixo do cabecalho de cada secao.
+		EnableAlphaTest();
+
+		glColor4f(0.85f, 0.70f, 0.35f, 0.45f);
+		RenderColor(x, y, width, 1.f, 0.f, 0);
+		EndRenderColor();
+
+		glColor4f(1.f, 1.f, 1.f, 1.f);
+	}
+}
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -66,17 +121,17 @@ bool SEASON3B::CNewUIOptionWindow::Create(CNewUIManager* pNewUIMng, int x, int y
 
 void SEASON3B::CNewUIOptionWindow::SetButtonInfo()
 {
-	//m_BtnClose.ChangeTextBackColor(RGBA(255, 255, 255, 0));
-	//m_BtnClose.ChangeButtonImgState(true, IMAGE_OPTION_BTN_CLOSE, true);
-	//m_BtnClose.ChangeButtonInfo(m_Pos.x + 68, m_Pos.y + 209, 54, 30);
-	//m_BtnClose.ChangeImgColor(BUTTON_STATE_UP, RGBA(255, 255, 255, 255));
-	//m_BtnClose.ChangeImgColor(BUTTON_STATE_DOWN, RGBA(255, 255, 255, 255));
+	// O botao de fechar e desenhado manualmente (X pequeno) em RenderButtons:
+	// a textura newui_button_close.tga e grande demais para esta janela compacta.
 
-	resolutionList.Create(m_Pos.x + 20.f, m_Pos.y + 70.f, 4);
+	resolutionList.Create(m_Pos.x + OPT_LIST_X, m_Pos.y + OPT_RES_LIST_Y, 4,
+		BITMAP_btn_empty_very_small, (int)OPT_LIST_BTN_W, (int)OPT_LIST_BTN_H, (int)OPT_LIST_BTN_GAP, 23);
 
-	fonttextList.Create(m_Pos.x + 20.f, m_Pos.y + 195.f, 3);
+	fonttextList.Create(m_Pos.x + OPT_LIST_X, m_Pos.y + OPT_FONT_LIST_Y, 3,
+		BITMAP_btn_empty_very_small, (int)OPT_LIST_BTN_W, (int)OPT_LIST_BTN_H, (int)OPT_LIST_BTN_GAP, 23);
 
-	languageList.Create(m_Pos.x + 20.f, m_Pos.y + 303.f, 3);
+	languageList.Create(m_Pos.x + OPT_LIST_X, m_Pos.y + OPT_LANG_LIST_Y, 3,
+		BITMAP_btn_empty_very_small, (int)OPT_LIST_BTN_W, (int)OPT_LIST_BTN_H, (int)OPT_LIST_BTN_GAP, 23);
 
 	LoadResolution("Data\\Resolutions.xml");
 }
@@ -100,11 +155,11 @@ void SEASON3B::CNewUIOptionWindow::SetPos(int x, int y)
 	m_Pos.x = RenderFrameX;
 	m_Pos.y = RenderFrameY;
 
-	resolutionList.SetPosition(m_Pos.x + 20.f, m_Pos.y + 70.f);
+	resolutionList.SetPosition(m_Pos.x + OPT_LIST_X, m_Pos.y + OPT_RES_LIST_Y);
 
-	fonttextList.SetPosition(m_Pos.x + 20.f, m_Pos.y + 195.f);
+	fonttextList.SetPosition(m_Pos.x + OPT_LIST_X, m_Pos.y + OPT_FONT_LIST_Y);
 
-	languageList.SetPosition(m_Pos.x + 20.f, m_Pos.y + 303.f);
+	languageList.SetPosition(m_Pos.x + OPT_LIST_X, m_Pos.y + OPT_LANG_LIST_Y);
 }
 
 bool SEASON3B::CNewUIOptionWindow::UpdateMouseEvent()
@@ -112,42 +167,45 @@ bool SEASON3B::CNewUIOptionWindow::UpdateMouseEvent()
 	float RenderFrameX = m_Pos.x;
 	float RenderFrameY = m_Pos.y;
 
-	//if (m_BtnClose.UpdateMouseEvent() == true)
-	//{
-	//	g_pNewUISystem->Hide(SEASON3B::INTERFACE_OPTION);
-	//	return false;
-	//}
+	if (SEASON3B::IsPress(VK_LBUTTON)
+		&& CheckMouseIn(RenderFrameX + OPT_CLOSE_X, RenderFrameY + OPT_CLOSE_Y,
+			OPT_CLOSE_SIZE, OPT_CLOSE_SIZE))
+	{
+		g_pNewUISystem->Hide(SEASON3B::INTERFACE_OPTION);
+		PlayBuffer(SOUND_CLICK01);
+		return false;
+	}
 
-	if (SEASON3B::IsPress(VK_LBUTTON) && CheckMouseIn(RenderFrameX + 210.0, RenderFrameY + 40.0, 15, 15))
+	if (SEASON3B::IsPress(VK_LBUTTON) && CheckMouseIn(RenderFrameX + OPT_CHECK_X, RenderFrameY + OPT_CHECK_Y, 15, 15))
 	{
 		m_bAutoAttack = !m_bAutoAttack;
 	}
-	if (SEASON3B::IsPress(VK_LBUTTON) && CheckMouseIn(RenderFrameX + 210.0, RenderFrameY + 58.0, 15, 15))
+	if (SEASON3B::IsPress(VK_LBUTTON) && CheckMouseIn(RenderFrameX + OPT_CHECK_X, RenderFrameY + OPT_CHECK_Y + OPT_CHECK_STEP, 15, 15))
 	{
 		m_bWhisperSound = !m_bWhisperSound;
 	}
-	if (SEASON3B::IsPress(VK_LBUTTON) && CheckMouseIn(RenderFrameX + 210.0, RenderFrameY + 76.0, 15, 15))
+	if (SEASON3B::IsPress(VK_LBUTTON) && CheckMouseIn(RenderFrameX + OPT_CHECK_X, RenderFrameY + OPT_CHECK_Y + OPT_CHECK_STEP * 2.f, 15, 15))
 	{
 		m_bSlideHelp = !m_bSlideHelp;
 	}
 
-	if (SEASON3B::IsPress(VK_LBUTTON) && CheckMouseIn(RenderFrameX + 210.0, RenderFrameY + 94.0, 15, 15))
+	if (SEASON3B::IsPress(VK_LBUTTON) && CheckMouseIn(RenderFrameX + OPT_CHECK_X, RenderFrameY + OPT_CHECK_Y + OPT_CHECK_STEP * 3.f, 15, 15))
 	{
 		m_RenderEffect = !m_RenderEffect;
 	}
-	if (SEASON3B::IsPress(VK_LBUTTON) && CheckMouseIn(RenderFrameX + 210.0, RenderFrameY + 112.0, 15, 15))
+	if (SEASON3B::IsPress(VK_LBUTTON) && CheckMouseIn(RenderFrameX + OPT_CHECK_X, RenderFrameY + OPT_CHECK_Y + OPT_CHECK_STEP * 4.f, 15, 15))
 	{
 		m_RenderEquipment = !m_RenderEquipment;
 	}
-	if (SEASON3B::IsPress(VK_LBUTTON) && CheckMouseIn(RenderFrameX + 210.0, RenderFrameY + 130.0, 15, 15))
+	if (SEASON3B::IsPress(VK_LBUTTON) && CheckMouseIn(RenderFrameX + OPT_CHECK_X, RenderFrameY + OPT_CHECK_Y + OPT_CHECK_STEP * 5.f, 15, 15))
 	{
 		m_RenderTerrain = !m_RenderTerrain;
 	}
-	if (SEASON3B::IsPress(VK_LBUTTON) && CheckMouseIn(RenderFrameX + 210.0, RenderFrameY + 148.0, 15, 15))
+	if (SEASON3B::IsPress(VK_LBUTTON) && CheckMouseIn(RenderFrameX + OPT_CHECK_X, RenderFrameY + OPT_CHECK_Y + OPT_CHECK_STEP * 6.f, 15, 15))
 	{
 		m_RenderObjects = !m_RenderObjects;
 	}
-	if (SEASON3B::IsPress(VK_LBUTTON) && CheckMouseIn(RenderFrameX + 210.0, RenderFrameY + 166.0, 15, 15))
+	if (SEASON3B::IsPress(VK_LBUTTON) && CheckMouseIn(RenderFrameX + OPT_CHECK_X, RenderFrameY + OPT_CHECK_Y + OPT_CHECK_STEP * 7.f, 15, 15))
 	{
 		double backupWidth = gwinhandle->GetScreenX();
 		double backupHight = gwinhandle->GetScreenY();
@@ -162,14 +220,14 @@ bool SEASON3B::CNewUIOptionWindow::UpdateMouseEvent()
 		rInput.Create(gwinhandle->GethWnd(), WindowWidth, WindowHeight);
 
 		g_pMoveCommandWindow->SetPos(1, 1);
-		this->SetPos(0, 70);
+		this->SetPos(0, 50);
 		g_pNewUISystem->RenderFrameUpdate(backupWidth, backupHight);
 		g_pNewUI3DRenderMng->Reload3DEffectObject(WindowWidth, WindowHeight);
 
 		LoadResolution("Data\\Resolutions.xml");
 	}
 
-	if (CheckMouseIn(RenderFrameX + 108 - 8, RenderFrameY + 205, 124 + 8, 16))
+	if (CheckMouseIn(RenderFrameX + 100, RenderFrameY + OPT_VOLUME_Y, 141, 16))
 	{
 		int iOldValue = m_iVolumeLevel;
 		if (MouseWheel > 0)
@@ -192,14 +250,14 @@ bool SEASON3B::CNewUIOptionWindow::UpdateMouseEvent()
 		}
 		if (SEASON3B::IsRepeat(VK_LBUTTON))
 		{
-			int x = MouseX - (RenderFrameX + 108);
+			int x = MouseX - (RenderFrameX + 100);
 			if (x < 0)
 			{
 				m_iVolumeLevel = 0;
 			}
 			else
 			{
-				float fValue = (10.f * x) / 124.f;
+				float fValue = (10.f * x) / 141.f;
 				m_iVolumeLevel = (int)fValue + 1;
 			}
 		}
@@ -209,7 +267,7 @@ bool SEASON3B::CNewUIOptionWindow::UpdateMouseEvent()
 			SetEffectVolumeLevel(m_iVolumeLevel);
 		}
 	}
-	if (CheckMouseIn(RenderFrameX + 100, RenderFrameY + 240, 141, 29))
+	if (CheckMouseIn(RenderFrameX + 100, RenderFrameY + OPT_EFFECT_Y, 141, 29))
 	{
 		if (SEASON3B::IsRepeat(VK_LBUTTON))
 		{
@@ -234,7 +292,7 @@ bool SEASON3B::CNewUIOptionWindow::UpdateMouseEvent()
 		change_language();
 	}
 
-	return !CheckMouseIn(RenderFrameX, RenderFrameY, 260.0, 385.0);
+	return !CheckMouseIn(RenderFrameX, RenderFrameY, OPT_WINDOW_W, OPT_WINDOW_H);
 }
 
 bool SEASON3B::CNewUIOptionWindow::UpdateKeyEvent()
@@ -399,21 +457,17 @@ void SEASON3B::CNewUIOptionWindow::UnloadImages()
 
 void SEASON3B::CNewUIOptionWindow::RenderFrame()
 {
-	window_backmsg(m_Pos.x, m_Pos.y, 260.f, 385.f);
-
-	RenderTable(m_Pos.x + 15.f, m_Pos.y + 45.f, 75.f, 130.f);
-
-	RenderTable(m_Pos.x + 15.f, m_Pos.y + 190.f, 75.f, 85.f);
-
-	RenderTable(m_Pos.x + 15.f, m_Pos.y + 298.f, 75.f, 80.f);
+	// Moldura classica do MU (a textura do Menu do Sistema tem largura fixa
+	// de 213px e distorce se esticada para 260px).
+	window_backmsg(m_Pos.x, m_Pos.y, OPT_WINDOW_W, OPT_WINDOW_H);
 
 	int Bitmap_point_draw = CNewUICursedTempleSystem::IMAGE_CURSEDTEMPLESYSTEM_MINIMAPICON_HOLYITEM_PC;
 
-	RenderBitmap(Bitmap_point_draw, ((float)m_Pos.x + 18.f), (float)m_Pos.y + 32.f, 8.f, 8.f, 0.f, 0.f, 14.f / 16.f, 14.f / 16.f);
+	RenderBitmap(Bitmap_point_draw, ((float)m_Pos.x + OPT_LIST_X - 3.f), (float)m_Pos.y + OPT_RES_HEADER_Y, 8.f, 8.f, 0.f, 0.f, 14.f / 16.f, 14.f / 16.f);
 
-	RenderBitmap(Bitmap_point_draw, ((float)m_Pos.x + 18.f), (float)m_Pos.y + 177.f, 8.f, 8.f, 0.f, 0.f, 14.f / 16.f, 14.f / 16.f);
+	RenderBitmap(Bitmap_point_draw, ((float)m_Pos.x + OPT_LIST_X - 3.f), (float)m_Pos.y + OPT_FONT_HEADER_Y, 8.f, 8.f, 0.f, 0.f, 14.f / 16.f, 14.f / 16.f);
 
-	RenderBitmap(Bitmap_point_draw, ((float)m_Pos.x + 18.f), (float)m_Pos.y + 282.f, 8.f, 8.f, 0.f, 0.f, 14.f / 16.f, 14.f / 16.f);
+	RenderBitmap(Bitmap_point_draw, ((float)m_Pos.x + OPT_LIST_X - 3.f), (float)m_Pos.y + OPT_LANG_HEADER_Y, 8.f, 8.f, 0.f, 0.f, 14.f / 16.f, 14.f / 16.f);
 
 	resolutionList.Render();
 
@@ -427,17 +481,17 @@ void SEASON3B::CNewUIOptionWindow::RenderContents()
 	float RenderFrameX = m_Pos.x;
 	float RenderFrameY = m_Pos.y;
 
+	// Titulo sem fundo, um pouco mais acima, na fonte branca do MuOnline.
 	g_pRenderText->SetBgColor(0);
-
 	g_pRenderText->SetFont(g_hFontBold);
+	g_pRenderText->SetTextColor(255, 255, 255, 255);
+	g_pRenderText->RenderText(RenderFrameX + 16.f, RenderFrameY + 5.f,
+		GlobalText[3450], OPT_WINDOW_W - 48.f, 16.f, RT3_SORT_CENTER);
 
-	g_pRenderText->SetTextColor(CLRDW_GOLD);
+	// Rotulos curtos e intuitivos para a coluna lateral.
+	g_pRenderText->RenderText(RenderFrameX + OPT_LIST_X + 12.f, RenderFrameY + OPT_RES_HEADER_Y, "Resolução");
 
-	g_pRenderText->RenderText(RenderFrameX + 130, RenderFrameY + 8, GlobalText[3450], 0, 0, 8);
-
-	g_pRenderText->RenderText(RenderFrameX + 30, RenderFrameY + 32, gTextClien.TextClien_Khac[4]); //--
-
-	g_pRenderText->RenderText(RenderFrameX + 30, RenderFrameY + 177, gTextClien.TextClien_Khac[5]); //--
+	g_pRenderText->RenderText(RenderFrameX + OPT_LIST_X + 12.f, RenderFrameY + OPT_FONT_HEADER_Y, "Fonte");
 
 	g_pRenderText->SetFont(g_hFont);
 
@@ -445,31 +499,38 @@ void SEASON3B::CNewUIOptionWindow::RenderContents()
 
 	g_pRenderText->SetBgColor(0);
 
-	g_pRenderText->RenderText(RenderFrameX + 100, RenderFrameY + 40, GlobalText[386], 0, 15); //-- Automatic Attack
+	g_pRenderText->RenderText(RenderFrameX + 100, RenderFrameY + OPT_CHECK_Y, GlobalText[386], 0, 15); //-- Automatic Attack
 
-	g_pRenderText->RenderText(RenderFrameX + 100, RenderFrameY + 58, GlobalText[387], 0, 15); //-- Beep sound for whispering
+	g_pRenderText->RenderText(RenderFrameX + 100, RenderFrameY + OPT_CHECK_Y + OPT_CHECK_STEP, GlobalText[387], 0, 15); //-- Beep sound for whispering
 
-	g_pRenderText->RenderText(RenderFrameX + 100, RenderFrameY + 76, GlobalText[919], 0, 15); //-- Slide Help
+	g_pRenderText->RenderText(RenderFrameX + 100, RenderFrameY + OPT_CHECK_Y + OPT_CHECK_STEP * 2.f, GlobalText[919], 0, 15); //-- Slide Help
 
-	g_pRenderText->RenderText(RenderFrameX + 100, RenderFrameY + 94, gTextClien.TextClien_Khac[6], 0, 15); //-- Slide Help
+	g_pRenderText->RenderText(RenderFrameX + 100, RenderFrameY + OPT_CHECK_Y + OPT_CHECK_STEP * 3.f, gTextClien.TextClien_Khac[6], 0, 15); //-- Effect
 
-	g_pRenderText->RenderText(RenderFrameX + 100, RenderFrameY + 112, gTextClien.TextClien_Khac[7], 0, 15); //-- Slide Help
+	g_pRenderText->RenderText(RenderFrameX + 100, RenderFrameY + OPT_CHECK_Y + OPT_CHECK_STEP * 4.f, gTextClien.TextClien_Khac[7], 0, 15); //-- Equipment
 
-	g_pRenderText->RenderText(RenderFrameX + 100, RenderFrameY + 130, gTextClien.TextClien_Khac[8], 0, 15); //-- Slide Help
+	g_pRenderText->RenderText(RenderFrameX + 100, RenderFrameY + OPT_CHECK_Y + OPT_CHECK_STEP * 5.f, gTextClien.TextClien_Khac[8], 0, 15); //-- Terrain
 
-	g_pRenderText->RenderText(RenderFrameX + 100, RenderFrameY + 148, gTextClien.TextClien_Khac[9], 0, 15); //-- Render Objects
+	g_pRenderText->RenderText(RenderFrameX + 100, RenderFrameY + OPT_CHECK_Y + OPT_CHECK_STEP * 6.f, gTextClien.TextClien_Khac[9], 0, 15); //-- Objects
 
-	g_pRenderText->RenderText(RenderFrameX + 100, RenderFrameY + 166, gwinhandle->CheckWndMode() ? "Window Mode" : "Fullscreen", 0, 15); //-- Window Mode
+	const char* pszWindowMode = "Fullscreen";
 
-	g_pRenderText->RenderText(RenderFrameX + 100, RenderFrameY + 195, GlobalText[389]); //-- Volume
+	if (gwinhandle->GetWindowMode() == WINDOW_MODE_WINDOWED)
+		pszWindowMode = "Window Mode";
+	else if (gwinhandle->GetWindowMode() == WINDOW_MODE_BORDERLESS)
+		pszWindowMode = "Borderless";
 
-	g_pRenderText->RenderText(RenderFrameX + 100, RenderFrameY + 230, GlobalText[1840]); //-- +Effect limitation
+	g_pRenderText->RenderText(RenderFrameX + 100, RenderFrameY + OPT_CHECK_Y + OPT_CHECK_STEP * 7.f, pszWindowMode, 0, 15); //-- Window Mode
+
+	g_pRenderText->RenderText(RenderFrameX + 100, RenderFrameY + OPT_VOLUME_Y - 8.f, GlobalText[389]); //-- Volume
+
+	g_pRenderText->RenderText(RenderFrameX + 100, RenderFrameY + OPT_EFFECT_Y - 8.f, GlobalText[1840]); //-- +Effect limitation
 
 	g_pRenderText->SetFont(g_hFontBold);
 
-	g_pRenderText->SetTextColor(CLRDW_GOLD);
+	g_pRenderText->SetTextColor(255, 255, 255, 255);
 
-	g_pRenderText->RenderText(RenderFrameX + 30, RenderFrameY + 282, "Language");
+	g_pRenderText->RenderText(RenderFrameX + OPT_LIST_X + 12.f, RenderFrameY + OPT_LANG_HEADER_Y, "Idioma");
 
 	g_pRenderText->SetFont(g_hFont);
 
@@ -490,65 +551,79 @@ void SEASON3B::CNewUIOptionWindow::RenderButtons()
 	float RenderFrameX = m_Pos.x;
 	float RenderFrameY = m_Pos.y;
 
-	RenderChecked(RenderFrameX + 210.0, RenderFrameY + 40.0, m_bAutoAttack);
+	RenderChecked(RenderFrameX + OPT_CHECK_X, RenderFrameY + OPT_CHECK_Y, m_bAutoAttack);
 
-	RenderChecked(RenderFrameX + 210.0, RenderFrameY + 58.0, m_bWhisperSound);
+	RenderChecked(RenderFrameX + OPT_CHECK_X, RenderFrameY + OPT_CHECK_Y + OPT_CHECK_STEP, m_bWhisperSound);
 
-	RenderChecked(RenderFrameX + 210.0, RenderFrameY + 76.0, m_bSlideHelp);
+	RenderChecked(RenderFrameX + OPT_CHECK_X, RenderFrameY + OPT_CHECK_Y + OPT_CHECK_STEP * 2.f, m_bSlideHelp);
 
-	RenderChecked(RenderFrameX + 210.0, RenderFrameY + 94.0, m_RenderEffect);
+	RenderChecked(RenderFrameX + OPT_CHECK_X, RenderFrameY + OPT_CHECK_Y + OPT_CHECK_STEP * 3.f, m_RenderEffect);
 
-	RenderChecked(RenderFrameX + 210.0, RenderFrameY + 112.0, m_RenderEquipment);
+	RenderChecked(RenderFrameX + OPT_CHECK_X, RenderFrameY + OPT_CHECK_Y + OPT_CHECK_STEP * 4.f, m_RenderEquipment);
 
-	RenderChecked(RenderFrameX + 210.0, RenderFrameY + 130.0, m_RenderTerrain);
+	RenderChecked(RenderFrameX + OPT_CHECK_X, RenderFrameY + OPT_CHECK_Y + OPT_CHECK_STEP * 5.f, m_RenderTerrain);
 
-	RenderChecked(RenderFrameX + 210.0, RenderFrameY + 148.0, m_RenderObjects);
+	RenderChecked(RenderFrameX + OPT_CHECK_X, RenderFrameY + OPT_CHECK_Y + OPT_CHECK_STEP * 6.f, m_RenderObjects);
 
-	RenderChecked(RenderFrameX + 210.0, RenderFrameY + 166.0, gwinhandle->CheckWndMode());
+	RenderChecked(RenderFrameX + OPT_CHECK_X, RenderFrameY + OPT_CHECK_Y + OPT_CHECK_STEP * 7.f, gwinhandle->CheckWndMode());
 
 
-	RenderImage(IMAGE_OPTION_VOLUME_BACK, RenderFrameX + 108, RenderFrameY + 205, 124.f, 16.f);
+	RenderImage(IMAGE_OPTION_VOLUME_BACK, RenderFrameX + 108, RenderFrameY + OPT_VOLUME_Y, 124.f, 16.f);
 
 	if (m_iVolumeLevel > 0)
 	{
-		RenderImage(IMAGE_OPTION_VOLUME_COLOR, RenderFrameX + 108, RenderFrameY + 205, 124.f * 0.1f * (m_iVolumeLevel), 16.f);
+		RenderImage(IMAGE_OPTION_VOLUME_COLOR, RenderFrameX + 108, RenderFrameY + OPT_VOLUME_Y, 124.f * 0.1f * (m_iVolumeLevel), 16.f);
 	}
 
-	RenderImage(IMAGE_OPTION_EFFECT_BACK, RenderFrameX + 100, RenderFrameY + 240, 141.f, 29.f);
+	RenderImage(IMAGE_OPTION_EFFECT_BACK, RenderFrameX + 100, RenderFrameY + OPT_EFFECT_Y, 141.f, 29.f);
 
 	if (m_iRenderLevel >= 0)
 	{
-		RenderImage(IMAGE_OPTION_EFFECT_COLOR, RenderFrameX + 100, RenderFrameY + 240, 141.f * 0.2f * (m_iRenderLevel + 1), 29.f);
+		RenderImage(IMAGE_OPTION_EFFECT_COLOR, RenderFrameX + 100, RenderFrameY + OPT_EFFECT_Y, 141.f * 0.2f * (m_iRenderLevel + 1), 29.f);
 	}
+
+	// X de fechar pequeno, desenhado dentro da barra de titulo.
+	EnableAlphaTest();
+
+	glColor4f(0.10f, 0.10f, 0.12f, 0.90f);
+	RenderColor(RenderFrameX + OPT_CLOSE_X, RenderFrameY + OPT_CLOSE_Y,
+		OPT_CLOSE_SIZE, OPT_CLOSE_SIZE, 0.f, 0);
+
+	glColor4f(1.f, 1.f, 1.f, 0.80f);
+	RenderColor(RenderFrameX + OPT_CLOSE_X, RenderFrameY + OPT_CLOSE_Y,
+		OPT_CLOSE_SIZE, 1.f, 0.f, 0);
+	RenderColor(RenderFrameX + OPT_CLOSE_X, RenderFrameY + OPT_CLOSE_Y + OPT_CLOSE_SIZE - 1.f,
+		OPT_CLOSE_SIZE, 1.f, 0.f, 0);
+	RenderColor(RenderFrameX + OPT_CLOSE_X, RenderFrameY + OPT_CLOSE_Y,
+		1.f, OPT_CLOSE_SIZE, 0.f, 0);
+	RenderColor(RenderFrameX + OPT_CLOSE_X + OPT_CLOSE_SIZE - 1.f, RenderFrameY + OPT_CLOSE_Y,
+		1.f, OPT_CLOSE_SIZE, 0.f, 0);
+
+	EndRenderColor();
+
+	g_pRenderText->SetBgColor(0);
+	g_pRenderText->SetFont(g_hFontBold);
+	g_pRenderText->SetTextColor(255, 255, 255, 255);
+	g_pRenderText->RenderText(RenderFrameX + OPT_CLOSE_X, RenderFrameY + OPT_CLOSE_Y + 1.f,
+		"X", OPT_CLOSE_SIZE, OPT_CLOSE_SIZE, RT3_SORT_CENTER);
 }
 
 void SEASON3B::CNewUIOptionWindow::RenderTable(float x, float y, float width, float height)
 {
+	// Painel limpo: fundo escuro translucido + borda fina dourada discreta.
+	// Substitui as ornacoes de 14px que deixavam a coluna lateral carregada.
 	EnableAlphaTest();
 
-	glColor4f(0.0, 0.0, 0.0, 0.40000001);
+	glColor4f(0.05f, 0.06f, 0.08f, 0.72f);
+	RenderColor(x, y, width, height, 0.0f, 0);
 
-	RenderColor((x + 3), (y + 2), (width - 7), (height - 7), 0.0, 0);
+	glColor4f(0.62f, 0.50f, 0.28f, 0.55f);
+	RenderColor(x, y, width, 1.f, 0.0f, 0);
+	RenderColor(x, y + height - 1.f, width, 1.f, 0.0f, 0);
+	RenderColor(x, y, 1.f, height, 0.0f, 0);
+	RenderColor(x + width - 1.f, y, 1.f, height, 0.0f, 0);
 
 	EndRenderColor();
-
-#if MAIN_UPDATE <= 603
-	RenderImage(IMAGE_MAIN_TABLE_TOP_LEFT, x, y, 14.0, 14.0);
-
-	RenderImage(IMAGE_MAIN_TABLE_TOP_RIGHT, (x + width - 14), y, 14.0, 14.0);
-
-	RenderImage(IMAGE_MAIN_TABLE_BOTTOM_LEFT, x, (y + height - 14), 14.0, 14.0);
-
-	RenderImage(IMAGE_MAIN_TABLE_BOTTOM_RIGHT, (x + width - 14), (y + height - 14), 14.0, 14.0);
-
-	RenderImage(IMAGE_MAIN_TABLE_TOP_PIXEL, (x + 6), y, (width - 12), 14.0);
-
-	RenderImage(IMAGE_MAIN_TABLE_RIGHT_PIXEL, (x + width - 14), (y + 6), 14.0, (height - 14));
-
-	RenderImage(IMAGE_MAIN_TABLE_BOTTOM_PIXEL, (x + 6), (y + height - 14), (width - 12), 14.0);
-
-	RenderImage(IMAGE_MAIN_TABLE_LEFT_PIXEL, x, (y + 6), 14.0, (height - 14));
-#endif
 }
 
 void SEASON3B::CNewUIOptionWindow::SetAutoAttack(bool bAuto)
@@ -673,7 +748,7 @@ void SEASON3B::CNewUIOptionWindow::change_resolution()
 
 			g_pMoveCommandWindow->SetPos(1, 1);
 
-			this->SetPos(0, 70);
+			this->SetPos(0, 50);
 
 			g_pNewUISystem->RenderFrameUpdate(backupWidth, backupHight);
 
@@ -733,7 +808,6 @@ void SEASON3B::CNewUIOptionWindow::LoadResolution(const char* filename)
 	int fontindex = 0;
 	int resolutionListIndex = 0;
 	int currentListIndex = 0;
-	const bool windowed = gwinhandle->CheckWndMode();
 
 	pugi::xml_node root = file.child("ResolutionsInfo");
 
@@ -741,10 +815,7 @@ void SEASON3B::CNewUIOptionWindow::LoadResolution(const char* filename)
 	{
 		std::string text_name = child_io.attribute("name").as_string();
 
-		if (text_name == "800x600")
-			continue;
-
-		if (windowed && !CSettings::IsWindowModeResolution(text_name))
+		if (!CSettings::IsWindowModeResolution(text_name))
 			continue;
 
 		resolutionList.push_back(text_name);

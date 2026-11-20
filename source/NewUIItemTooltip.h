@@ -87,6 +87,17 @@ private:
 	int position_name;
 	ITEM* current_item;
 	int m_ItemLevel;
+
+	// Cache do texto do tooltip: o texto so muda quando o item muda.
+	bool m_bTooltipCacheValid;
+	short m_cachedType;
+	int  m_cachedLevel, m_cachedOption1, m_cachedExtOption;
+	bool m_cachedPeriod, m_cachedExpired;
+	long m_cachedExpireTime;
+	char m_cachedTextList[90][100];
+	int  m_cachedBold[90];
+	int  m_cachedColor[90];
+	int  m_cachedLineNum, m_cachedSkipLine;
 	std::vector<_ITEM_TOOLTIP_DATA>m_ItemTooltip;
 	std::vector<_ITEM_TOOLTIP_TEXT>m_ItemTooltipText;
 	std::vector<_ITEM_LEVEL_TOOTIP_DATA> m_ItemTooltipLevel;

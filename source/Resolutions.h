@@ -34,6 +34,7 @@ public:
 	const char* Getfontfamily();
 	ResolutionConfig* FindInfoByIndex(int idx);
 	int FindInfoByIndex(const std::string text_name);
+	bool HasIndex(int idx) const;
 	void FindResolutionByIndex(int idx, unsigned int* width, unsigned int* height, int* fontsize);
 	static bool IsWindowModeResolution(int width, int height);
 	static bool IsWindowModeResolution(const std::string& text_name);

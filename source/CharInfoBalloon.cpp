@@ -78,7 +78,9 @@ void CCharInfoBalloon::Render()
 
 	int nTextPosX = (int)(PosX / g_fScreenRate_x);
 	g_pRenderText->SetBgColor(0);
-	g_pRenderText->SetTextColor(m_dwNameColor);
+	// Se SetInfo() ainda nao foi chamado, m_dwNameColor fica 0 e o texto
+	// nao aparece (ou aparece preto). Garante branco opaco como fallback.
+	g_pRenderText->SetTextColor(m_dwNameColor != 0 ? m_dwNameColor : CLRDW_WHITE);
 	g_pRenderText->RenderText(nTextPosX, (int)((PosY + 7) / g_fScreenRate_y), m_szName, (CSprite::GetWidth() / g_fScreenRate_x), 0, RT3_SORT_CENTER);
 
 	g_pRenderText->SetTextColor(CLRDW_WHITE);

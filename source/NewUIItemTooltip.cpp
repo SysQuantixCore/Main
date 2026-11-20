@@ -25,6 +25,17 @@ CNewUIItemTooltip::CNewUIItemTooltip()
 {
 	m_ItemLevel = -1;
 
+	m_bTooltipCacheValid = false;
+	m_cachedType = 0;
+	m_cachedLevel = 0;
+	m_cachedOption1 = 0;
+	m_cachedExtOption = 0;
+	m_cachedPeriod = false;
+	m_cachedExpired = false;
+	m_cachedExpireTime = 0;
+	m_cachedLineNum = 0;
+	m_cachedSkipLine = 0;
+
 #if MAIN_UPDATE > 303
 #ifdef CHINESE_LANGUAGE
 	this->OpenItemTooltip("Data\\Local\\itemtooltip.bmd");
@@ -136,6 +147,25 @@ void CNewUIItemTooltip::RenderItemTooltip(int sx, int sy, ITEM* pItem, bool Sell
 
 	this->current_item = pItem;
 
+	// O texto so e reconstruido quando o item (ou seus opcoes) muda.
+	const bool bUseCache = false && m_bTooltipCacheValid
+		&& m_cachedType == pItem->Type
+		&& m_cachedLevel == pItem->Level
+		&& m_cachedOption1 == pItem->Option1
+		&& m_cachedExtOption == pItem->ExtOption
+		&& m_cachedPeriod == pItem->bPeriodItem
+		&& m_cachedExpired == pItem->bExpiredPeriod
+		&& m_cachedExpireTime == pItem->lExpireTime;
+
+	if (bUseCache)
+	{
+		memcpy(TextList, m_cachedTextList, sizeof(TextList));
+		memcpy(TextBold, m_cachedBold, sizeof(TextBold));
+		memcpy(TextListColor, m_cachedColor, sizeof(TextListColor));
+		LineNum = m_cachedLineNum;
+		SkipLine = m_cachedSkipLine;
+	}
+
 	if (tooltipdata)
 	{
 		_ITEM_LEVEL_TOOTIP_DATA* tooltiplevel = NULL;
@@ -182,6 +212,8 @@ void CNewUIItemTooltip::RenderItemTooltip(int sx, int sy, ITEM* pItem, bool Sell
 			}
 		}
 
+		if (!bUseCache)
+		{
 		memset(TextList, 0, sizeof(TextList));
 		memset(TextBold, 0, sizeof(TextBold));
 		memset(TextListColor, 0, sizeof(TextListColor));
@@ -774,6 +806,24 @@ void CNewUIItemTooltip::RenderItemTooltip(int sx, int sy, ITEM* pItem, bool Sell
 					TextListColor[LineNum++] = TEXT_COLOR_BLUE;
 				}
 			}
+
+			if (!bUseCache)
+			{
+				memcpy(m_cachedTextList, TextList, sizeof(TextList));
+				memcpy(m_cachedBold, TextBold, sizeof(TextBold));
+				memcpy(m_cachedColor, TextListColor, sizeof(TextListColor));
+				m_cachedLineNum = LineNum;
+				m_cachedSkipLine = SkipLine;
+				m_cachedType = pItem->Type;
+				m_cachedLevel = pItem->Level;
+				m_cachedOption1 = pItem->Option1;
+				m_cachedExtOption = pItem->ExtOption;
+				m_cachedPeriod = pItem->bPeriodItem;
+				m_cachedExpired = pItem->bExpiredPeriod;
+				m_cachedExpireTime = pItem->lExpireTime;
+				m_bTooltipCacheValid = true;
+			}
+		}
 
 			if (!bItemTextListBoxUse)
 			{

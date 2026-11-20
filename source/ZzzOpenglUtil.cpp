@@ -150,12 +150,70 @@ char GrabFileName[MAX_PATH];
 int  GrabScreen = 0;
 bool GrabFirst = false;
 
+void EnsureScreenshotDirectory(const char* filename)
+{
+	// Garante que a pasta do screenshot exista antes do fopen("wb") do JPEG.
+	// O caminho vem de Connect.msil (ex.: "ScreenShot\\Screen(...).jpg").
+	char dir[MAX_PATH] = { 0, };
+	strncpy_s(dir, sizeof(dir), filename, sizeof(dir) - 1);
+
+	char* slash = strrchr(dir, '\\');
+	if (slash == NULL)
+		slash = strrchr(dir, '/');
+
+	if (slash == NULL || slash == dir)
+		return;
+
+	*slash = '\0';
+
+	// Cria cada nivel do caminho (suporta caminhos relativos e absolutos).
+	for (char* p = dir + 1; *p != '\0'; ++p)
+	{
+		if (*p == '\\' || *p == '/')
+		{
+			*p = '\0';
+			CreateDirectoryA(dir, NULL);
+			*p = '\\';
+		}
+	}
+
+	CreateDirectoryA(dir, NULL);
+}
+
 void SaveScreen()
 {
 	GrabFirst = true;
-	unsigned char* Buffer = new unsigned char[(int)WindowWidth * (int)WindowHeight * 3];
-	glReadPixels(0, 0, (int)WindowWidth, (int)WindowHeight, GL_RGB, GL_UNSIGNED_BYTE, Buffer);
-	WriteJpeg(GrabFileName, (int)WindowWidth, (int)WindowHeight, Buffer, 100);
+
+	// Usa o tamanho real da area cliente: WindowWidth/Height sao logicos
+	// (escala da UI) e podem ser menores que o framebuffer em janela.
+	int iWidth = (int)WindowWidth;
+	int iHeight = (int)WindowHeight;
+
+	HWND hWnd = gwinhandle->GethWnd();
+	RECT rcClient = {};
+	if (hWnd != NULL && GetClientRect(hWnd, &rcClient)
+		&& rcClient.right > 0 && rcClient.bottom > 0)
+	{
+		iWidth = rcClient.right;
+		iHeight = rcClient.bottom;
+	}
+
+	unsigned char* Buffer = new unsigned char[iWidth * iHeight * 3];
+
+	// O glReadPixels usa GL_PACK_ALIGNMENT = 4 por padrao. Quando a largura
+	// times 3 nao e multiplo de 4 (ex.: 1366x3 = 4098), cada linha ganha
+	// padding e o JPEG sai com diagonal/rasgo. Alinhamento 1 garante linhas
+	// exatamente com iWidth * 3 bytes.
+	GLint iOldPackAlignment = 4;
+	glGetIntegerv(GL_PACK_ALIGNMENT, &iOldPackAlignment);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+
+	glReadPixels(0, 0, iWidth, iHeight, GL_RGB, GL_UNSIGNED_BYTE, Buffer);
+
+	glPixelStorei(GL_PACK_ALIGNMENT, iOldPackAlignment);
+
+	EnsureScreenshotDirectory(GrabFileName);
+	WriteJpeg(GrabFileName, iWidth, iHeight, Buffer, 100);
 
 	SAFE_DELETE_ARRAY(Buffer);
 

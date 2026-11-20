@@ -416,6 +416,10 @@ bool CreateOpenglWindow()
 		}
 	}
 
+	// Atualiza o titulo com o backend realmente obtido (pode ter havido
+	// fallback de modern para legacy quando o driver nao suportou 3.3+).
+	gwinhandle->ApplyWindowTitleGfx(gfxInfo.Modern);
+
 	ShowWindow(gwinhandle->GethWnd(), SW_SHOW);
 	SetForegroundWindow(gwinhandle->GethWnd());
 	SetFocus(gwinhandle->GethWnd());
@@ -867,7 +871,7 @@ BOOL OpenInitFile()
 	HKEY hKey = NULL;
 	DWORD dwDisp;
 	DWORD dwSize;
-	int bUseWindowMode = TRUE;
+	int windowMode = WINDOW_MODE_WINDOWED;
 
 	if (ERROR_SUCCESS == RegCreateKeyEx(HKEY_CURRENT_USER, "SOFTWARE\\Webzen\\Mu2\\Config", 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, &dwDisp))
 	{
@@ -897,7 +901,7 @@ BOOL OpenInitFile()
 
 		g_iChatInputType = 1;
 
-		RegReadIntOrDefault(hKey, "WindowMode", bUseWindowMode, TRUE);
+		RegReadIntOrDefault(hKey, "WindowMode", windowMode, WINDOW_MODE_WINDOWED);
 		RegReadStringOrDefault(hKey, "LangSelection", g_aszMLSelection, sizeof(g_aszMLSelection), "Eng");
 
 		NormalizeSelectedLanguageCode(g_aszMLSelection, sizeof(g_aszMLSelection));
@@ -909,8 +913,8 @@ BOOL OpenInitFile()
 		RegCloseKey(hKey);
 	}
 
-	gwinhandle->SetWndMode(bUseWindowMode);
-	gwinhandle->SetDisplayIndex(m_Resolution);
+	gwinhandle->SetWindowMode((mu_uint8)windowMode);
+	gwinhandle->SetDisplayIndex((mu_uint8)m_Resolution);
 
 	return TRUE;
 }
@@ -1573,6 +1577,138 @@ BOOL CALLBACK ConfigDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 	return FALSE;
 }
 
+namespace
+{
+	bool IsLauncherChainRunning()
+	{
+		// Nome do launcher vem de [Launcher] LauncherName do MainInfo.ini.
+		const char* pszLauncherName = (gmProtect->LauncherName[0] != 0)
+			? (const char*)gmProtect->LauncherName
+			: "MUOnlineLauncher.exe";
+
+		const char* szLauncherProcesses[2] =
+		{
+			pszLauncherName,
+			"MUOnlineGameShield.exe",
+		};
+
+		// GameGuard = 0 ignora o GameShield na verificacao da cadeia.
+		const size_t processCount = (gmProtect->GameGuard != 0) ? 2 : 1;
+
+		HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+
+		if (hSnapshot == INVALID_HANDLE_VALUE)
+			return false;
+
+		PROCESSENTRY32 pe = {};
+		pe.dwSize = sizeof(pe);
+
+		bool bRunning = false;
+
+		if (Process32First(hSnapshot, &pe))
+		{
+			do
+			{
+				for (size_t i = 0; i < processCount; ++i)
+				{
+					if (_stricmp(pe.szExeFile, szLauncherProcesses[i]) == 0)
+					{
+						bRunning = true;
+						break;
+					}
+				}
+
+				if (bRunning)
+					break;
+			} while (Process32Next(hSnapshot, &pe));
+		}
+
+		CloseHandle(hSnapshot);
+		return bRunning;
+	}
+
+	bool StartLauncher()
+	{
+		char szLauncherPath[MAX_PATH] = { 0, };
+		GetModuleFileName(NULL, szLauncherPath, MAX_PATH);
+
+		char* pszSlash = strrchr(szLauncherPath, '\\');
+		if (pszSlash)
+			*(pszSlash + 1) = '\0';
+		else
+			szLauncherPath[0] = '\0';
+
+		const char* pszLauncherName = (gmProtect->LauncherName[0] != 0)
+			? (const char*)gmProtect->LauncherName
+			: "MUOnlineLauncher.exe";
+
+		strcat_s(szLauncherPath, sizeof(szLauncherPath), pszLauncherName);
+
+		HINSTANCE hResult = ShellExecute(NULL, "open", szLauncherPath, NULL, NULL, SW_SHOWNORMAL);
+		return ((int)(INT_PTR)hResult > 32);
+	}
+
+	std::string GetLaunchHandoffPath()
+	{
+		char szPath[MAX_PATH] = { 0, };
+		GetModuleFileName(NULL, szPath, MAX_PATH);
+
+		char* pszSlash = strrchr(szPath, '\\');
+		if (pszSlash)
+			*(pszSlash + 1) = '\0';
+		else
+			szPath[0] = '\0';
+
+		return std::string(szPath) + "LauncherHandoff.tmp";
+	}
+
+	bool ConsumeLaunchHandoff()
+	{
+		// Arquivo criado pelo Main.exe quando ele abre o launcher. Serve para
+		// identificar o cliente iniciado pelo botao Play, pois o launcher se
+		// fecha logo em seguida e nao pode ser detectado como processo ativo.
+		const std::string path = GetLaunchHandoffPath();
+
+		HANDLE hFile = CreateFile(path.c_str(), GENERIC_READ,
+			FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+			FILE_ATTRIBUTE_NORMAL, NULL);
+
+		if (hFile == INVALID_HANDLE_VALUE)
+			return false;
+
+		FILETIME ftWrite = {};
+		GetFileTime(hFile, NULL, NULL, &ftWrite);
+		CloseHandle(hFile);
+		DeleteFile(path.c_str());
+
+		FILETIME ftNow = {};
+		GetSystemTimeAsFileTime(&ftNow);
+
+		ULARGE_INTEGER written = {};
+		written.LowPart = ftWrite.dwLowDateTime;
+		written.HighPart = ftWrite.dwHighDateTime;
+
+		ULARGE_INTEGER now = {};
+		now.LowPart = ftNow.dwLowDateTime;
+		now.HighPart = ftNow.dwHighDateTime;
+
+		// Valido por 30 segundos.
+		return (now.QuadPart > written.QuadPart)
+			&& ((now.QuadPart - written.QuadPart) < 30ULL * 10000000ULL);
+	}
+
+	void CreateLaunchHandoff()
+	{
+		const std::string path = GetLaunchHandoffPath();
+
+		HANDLE hFile = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL,
+			CREATE_ALWAYS, FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_TEMPORARY, NULL);
+
+		if (hFile != INVALID_HANDLE_VALUE)
+			CloseHandle(hFile);
+	}
+}
+
 // =====================================================================
 // PONTO DE ENTRADA
 //
@@ -1594,6 +1730,27 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLin
 		GAME_LOG_ERROR("Init", "ReadMainFile failed");
 		ExitProcess(0);
 		return 0;
+	}
+
+	// [Launcher] Launcher = 1 -> Main.exe abre o launcher e encerra.
+	// O launcher se fecha apos iniciar o cliente, entao a deteccao por processo
+	// ativo e insuficiente: o arquivo de handoff identifica o cliente iniciado
+	// pelo botao Play (sem ele, o Main.exe reabriria o launcher em loop).
+	if (gmProtect->Launcher != 0)
+	{
+		const bool bFromLauncher = ConsumeLaunchHandoff() || IsLauncherChainRunning();
+
+		if (!bFromLauncher)
+		{
+			CreateLaunchHandoff();
+
+			if (StartLauncher())
+				GAME_LOG_INFO("Init", "Launcher started by Main.exe");
+
+			return 0;
+		}
+
+		GAME_LOG_INFO("Init", "Client started by launcher - continuing");
 	}
 
 	EnablePermanentDep();

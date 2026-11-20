@@ -113,6 +113,9 @@ typedef struct
 	};
 	int MonsterHealthBarSwitch;
 	int UserHealthBarSwitch;
+	BYTE Launcher;			// [Launcher] Launcher - 1: Main.exe abre o launcher
+	char LauncherName[32];	// [Launcher] LauncherName - nome do executavel do launcher
+	BYTE GameGuard;			// [Launcher] GameGuard - considera o GameShield na cadeia do launcher
 } MAIN_FILE_INFO;
 struct TEXT_FILE_INFO
 {

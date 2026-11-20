@@ -43,6 +43,9 @@ void CNewUIInGameShop::Init()
 	m_pToolTipItem = NULL;
 	m_wToolTipItemType = 0;
 	m_iPointedDisplayItemIndex = -1;
+
+	for (int i = 0; i < INGAMESHOP_DISPLAY_ITEMLIST_SIZE; ++i)
+		m_iCachedProductSeq[i] = -1;
 }
 
 void CNewUIInGameShop::Release()
@@ -384,19 +387,8 @@ void CNewUIInGameShop::RenderDisplayItems()
 		int iPosX = IGS_ITEMRENDER_POS_X_STANDAD + (IMAGE_IGS_VIEWDETAIL_BTN_DISTANCE_X * (i % IGS_NUM_ITEMS_WIDTH));
 		int iPosY = IGS_ITEMRENDER_POS_Y_STANDAD + (IMAGE_IGS_VIEWDETAIL_BTN_DISTANCE_Y * (i / IGS_NUM_ITEMS_HEIGHT));
 
-		int iLevel = 0;
-		int iOption1 = 0;
-		int iExtOption = 0;
-
-		CASH_SHOP_PRODUCT_OPTION option;
-		if (GetDisplayItemOption(i, option))
-		{
-			iLevel = (option.iLevel * 8) | ((option.iSkill > 0) ? 0x80 : 0) | ((option.iLuck > 0) ? 0x04 : 0) | (option.iOption & 0x03);
-			iOption1 = option.iExOpt | ((option.iOption > 3) ? 0x40 : 0);
-			iExtOption = option.iAncOp;
-		}
-
-		RenderItem3D(m_Pos.x + iPosX, m_Pos.y + iPosY, IGS_ITEMRENDER_POS_WIDTH, IGS_ITEMRENDER_POS_HEIGHT, g_InGameShopSystem->GetPackageItemCode(i), iLevel, iOption1, iExtOption, true);
+		// Preview leve: sem opcoes/excellent (o tooltip ja mostra os atributos reais).
+		RenderItem3D(m_Pos.x + iPosX, m_Pos.y + iPosY, IGS_ITEMRENDER_POS_WIDTH, IGS_ITEMRENDER_POS_HEIGHT, g_InGameShopSystem->GetPackageItemCode(i), 0, 0, 0, true);
 	}
 
 	UpdateMousePositionn();
@@ -435,10 +427,25 @@ bool CNewUIInGameShop::GetDisplayItemOption(int iIndex, OUT CASH_SHOP_PRODUCT_OP
 	int iProductSeq = 0;
 	pPackage->GetProductSeqFirst(iProductSeq);
 
-	if (g_InGameShopSystem->GetProductOption(iProductSeq, info))
+	if (iIndex >= 0 && iIndex < INGAMESHOP_DISPLAY_ITEMLIST_SIZE
+		&& m_iCachedProductSeq[iIndex] == iProductSeq)
+	{
+		info = m_aCachedOptions[iIndex];
 		return true;
+	}
 
-	return g_InGameShopSystem->GetProductOptionByItemCode(atoi(pPackage->InGamePackageID), info);
+	bool bFound = g_InGameShopSystem->GetProductOption(iProductSeq, info);
+
+	if (!bFound)
+		bFound = g_InGameShopSystem->GetProductOptionByItemCode(atoi(pPackage->InGamePackageID), info);
+
+	if (bFound && iIndex >= 0 && iIndex < INGAMESHOP_DISPLAY_ITEMLIST_SIZE)
+	{
+		m_aCachedOptions[iIndex] = info;
+		m_iCachedProductSeq[iIndex] = iProductSeq;
+	}
+
+	return bFound;
 }
 
 void CNewUIInGameShop::DeleteItemToolTip()

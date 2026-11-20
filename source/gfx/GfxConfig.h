@@ -88,9 +88,10 @@ namespace gfx
         bool      m_Widescreen = false;
         bool      m_Verbose    = false;
         bool      m_CoreProfile = false;
-        // Fase 2: Mapped DESLIGADO. Aumenta FPS (14->23) mas CORROMPE a imagem
-        // neste driver Intel (faixas brancas, cenario some) mesmo com fences
-        // e 4 regioes. Apresentacao identica e requisito absoluto.
+        // Mapped VBO DESLIGADO: 6 variantes testadas (ring, reset frame,
+        // 4 regioes, fence, fence bloqueante, COHERENT+flush) todas corrompem
+        // a imagem neste driver Intel, apesar do ganho de FPS (14->64).
+        // Ver docs/analise_estabilidade_moderno.md.
         bool      m_Batch       = false;
         bool      m_Mapped      = false;
         bool      m_Bindless    = false;

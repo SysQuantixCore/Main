@@ -13,10 +13,82 @@
 #include "WINHANDLE.h"
 #include "./ExternalObject/leaf/regkey.h"
 
+namespace
+{
+	DWORD GetWindowStyleForMode(mu_uint8 mode)
+	{
+		if (mode == WINDOW_MODE_WINDOWED)
+			return WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_BORDER | WS_CLIPCHILDREN;
+
+		// Fullscreen exclusivo e borderless usam a janela sem moldura.
+		return WS_POPUP | WS_VISIBLE | WS_CLIPCHILDREN;
+	}
+
+	bool IsDisplayModeSupported(mu_uint32 width, mu_uint32 height)
+	{
+		DEVMODE dm = {};
+		dm.dmSize = sizeof(dm);
+
+		for (DWORD i = 0; EnumDisplaySettings(NULL, i, &dm); ++i)
+		{
+			if (dm.dmPelsWidth == width && dm.dmPelsHeight == height)
+				return true;
+		}
+
+		return false;
+	}
+
+	void CenterWindowInWorkArea(HWND hWnd, int width, int height, int& x, int& y)
+	{
+		RECT rcWork = { 0, 0, (LONG)GetSystemMetrics(SM_CXSCREEN), (LONG)GetSystemMetrics(SM_CYSCREEN) };
+
+		HMONITOR hMonitor = MonitorFromWindow(hWnd,
+			(hWnd == NULL) ? MONITOR_DEFAULTTOPRIMARY : MONITOR_DEFAULTTONEAREST);
+		MONITORINFO mi = {};
+		mi.cbSize = sizeof(mi);
+
+		if (hMonitor && GetMonitorInfo(hMonitor, &mi))
+			rcWork = mi.rcWork;
+
+		const int workWidth = rcWork.right - rcWork.left;
+		const int workHeight = rcWork.bottom - rcWork.top;
+
+		x = rcWork.left + (workWidth - width) / 2;
+		y = rcWork.top + (workHeight - height) / 2;
+
+		// Se a janela for maior que a area util, ancora no canto superior/esquerdo
+		// para nao esconder a barra de titulo fora da tela.
+		if (width <= workWidth)
+		{
+			if (x < rcWork.left)
+				x = rcWork.left;
+			else if (x + width > rcWork.right)
+				x = rcWork.right - width;
+		}
+		else
+		{
+			x = rcWork.left;
+		}
+
+		if (height <= workHeight)
+		{
+			if (y < rcWork.top)
+				y = rcWork.top;
+			else if (y + height > rcWork.bottom)
+				y = rcWork.bottom - height;
+		}
+		else
+		{
+			y = rcWork.top;
+		}
+	}
+}
+
 CWINHANDLE::CWINHANDLE()
 {
 	hWnd = NULL;
 	WndMode = true;
+	Borderless = false;
 	WndActive = false;
 	WndIconic = false;
 	hInstance = NULL;
@@ -68,23 +140,42 @@ HWND CWINHANDLE::Create(HINSTANCE hCurrentInst, mu_uint32 RenderSizeX, mu_uint32
 		RegisterClass(&wc);
 	}
 
-	RECT rc = { 0, 0, RenderSizeX, RenderSizeY };
+	mu_uint32 targetWidth = RenderSizeX;
+	mu_uint32 targetHeight = RenderSizeY;
+	this->ResolveRenderSize(targetWidth, targetHeight);
 
-	if (this->CheckWndMode())
+	mu_uint8 mode = this->GetWindowMode();
+
+	if (mode == WINDOW_MODE_FULLSCREEN
+		&& !this->ApplyFullscreenResolution(targetWidth, targetHeight))
 	{
-		AdjustWindowRect(&rc, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_BORDER | WS_CLIPCHILDREN, NULL);
+		// Se a resolucao nao for suportada, cai para borderless para nao ficar tela preta.
+		this->Borderless = true;
+		this->WndMode = true;
+		mode = this->GetWindowMode();
+		targetWidth = GetSystemMetrics(SM_CXSCREEN);
+		targetHeight = GetSystemMetrics(SM_CYSCREEN);
+	}
 
-		rc.right -= rc.left;
-		rc.bottom -= rc.top;
+	const DWORD dwStyle = GetWindowStyleForMode(mode);
+
+	if (mode == WINDOW_MODE_WINDOWED)
+	{
+		RECT rc = { 0, 0, (LONG)targetWidth, (LONG)targetHeight };
+		AdjustWindowRect(&rc, dwStyle, FALSE);
+
+		int width = rc.right - rc.left;
+		int height = rc.bottom - rc.top;
+		int x = 0;
+		int y = 0;
+		CenterWindowInWorkArea(NULL, width, height, x, y);
 
 		this->hWnd = CreateWindow(
 			windowName,
 			windowName,
-			WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_BORDER | WS_CLIPCHILDREN,
-			(GetSystemMetrics(SM_CXSCREEN) - rc.right) / 2,
-			(GetSystemMetrics(SM_CYSCREEN) - rc.bottom) / 2,
-			rc.right,
-			rc.bottom,
+			dwStyle,
+			x, y,
+			width, height,
 			NULL,
 			NULL,
 			hCurrentInst,
@@ -92,32 +183,27 @@ HWND CWINHANDLE::Create(HINSTANCE hCurrentInst, mu_uint32 RenderSizeX, mu_uint32
 	}
 	else
 	{
-		int fsWidth = GetSystemMetrics(SM_CXSCREEN);
-		int fsHeight = GetSystemMetrics(SM_CYSCREEN);
-
-		DEVMODE dmScreenSettings = {};
-		dmScreenSettings.dmSize = sizeof(dmScreenSettings);
-		dmScreenSettings.dmPelsWidth = fsWidth;
-		dmScreenSettings.dmPelsHeight = fsHeight;
-		dmScreenSettings.dmBitsPerPel = 32;
-		dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-		ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN);
-
 		this->hWnd = CreateWindow(
 			windowName,
 			windowName,
-			WS_POPUP | WS_VISIBLE | WS_CLIPCHILDREN,
+			dwStyle,
 			0, 0,
-			fsWidth,
-			fsHeight,
+			targetWidth,
+			targetHeight,
 			NULL,
 			NULL,
 			hCurrentInst,
 			NULL);
 
-		RenderSizeX = fsWidth;
-		RenderSizeY = fsHeight;
+		RenderSizeX = targetWidth;
+		RenderSizeY = targetHeight;
 	}
+
+	// Sincroniza o tamanho logico com o tamanho real da janela criada.
+	this->InitSize(targetWidth, targetHeight);
+
+	// Titulo com o renderer GFX ativo (legacy/modern + versao alvo).
+	this->ApplyWindowTitleGfx(gfx::Config::Instance().IsModern());
 
 	nid.cbSize = sizeof(nid);
 	nid.hWnd = this->hWnd;
@@ -133,6 +219,25 @@ HWND CWINHANDLE::Create(HINSTANCE hCurrentInst, mu_uint32 RenderSizeX, mu_uint32
 	}
 
 	return this->hWnd;
+}
+
+void CWINHANDLE::ApplyWindowTitleGfx(bool bModern)
+{
+	if (!hWnd)
+		return;
+
+	// Load() e idempotente: garante que a configuracao (Graphics.ini +
+	// linha de comando) ja foi lida antes de montar o titulo.
+	gfx::Config::Instance().Load();
+
+	std::string title = GMProtect->GetWindowName();
+	title += "  |  GFX: ";
+	title += bModern ? "modern" : "legacy";
+	title += " (";
+	title += gfx::Config::Instance().GetVersionName();
+	title += ")";
+
+	SetWindowText(hWnd, title.c_str());
 }
 
 void CWINHANDLE::Destroyer()
@@ -156,48 +261,14 @@ void CWINHANDLE::InitSize(mu_uint32 RenderSizeX, mu_uint32 RenderSizeY)
 
 	WindowHeight = RenderSizeY;
 
-	if (!this->CheckWndMode())
-	{
-		WindowWidth = GetSystemMetrics(SM_CXSCREEN);
-		WindowHeight = GetSystemMetrics(SM_CYSCREEN);
-	}
-
+	// Escala uniforme em todos os modos: preserva a proporcao (evita stretch)
+	// e gera barras laterais/vertiais apenas quando a proporcao e diferente.
 	const float ratioX = (float)WindowWidth / 640.0f;
 	const float ratioY = (float)WindowHeight / 480.0f;
-	const float aspect = (WindowHeight > 0) ? ((float)WindowWidth / (float)WindowHeight) : (4.0f / 3.0f);
-	const bool isWide = (aspect > ((4.0f / 3.0f) + 0.02f));
+	const float uniformScale = min(ratioX, ratioY);
 
-	if (isWide)
-	{
-		float uniformScale = min(ratioX, ratioY);
-		g_fScreenRate_x = uniformScale;
-		g_fScreenRate_y = uniformScale;
-	}
-	else if (gmProtect->ScreenType == 0)
-	{
-		g_fScreenRate_x = ratioX;
-		g_fScreenRate_y = ratioY;
-	}
-	else if (gmProtect->ScreenType == 1)
-	{
-		if (ratioX >= ratioY)
-		{
-			g_fScreenRate_x = ratioY;
-			g_fScreenRate_y = ratioY;
-		}
-		else
-		{
-			g_fScreenRate_x = ratioX;
-			g_fScreenRate_y = ratioX;
-		}
-	}
-	else
-	{
-		float uniformScale = min(ratioX, ratioY);
-
-		g_fScreenRate_x = uniformScale;
-		g_fScreenRate_y = uniformScale;
-	}
+	g_fScreenRate_x = uniformScale;
+	g_fScreenRate_y = uniformScale;
 
 	iWinWidth = ((float)WindowWidth / g_fScreenRate_x);
 
@@ -241,20 +312,33 @@ void CWINHANDLE::Resize(mu_uint32 RenderSizeX, mu_uint32 RenderSizeY)
 	if (!this->GethWnd())
 		return;
 
-	if (this->CheckWndMode())
+	mu_uint32 width = RenderSizeX;
+	mu_uint32 height = RenderSizeY;
+
+	if (width == 0 || height == 0)
+		this->ResolveRenderSize(width, height);
+
+	const mu_uint8 mode = this->GetWindowMode();
+	const DWORD dwStyle = GetWindowStyleForMode(mode);
+
+	if (mode == WINDOW_MODE_WINDOWED)
 	{
-		RECT rc = { 0, 0, RenderSizeX, RenderSizeY };
-		AdjustWindowRect(&rc, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_BORDER | WS_CLIPCHILDREN, FALSE);
-		int cx = (GetSystemMetrics(SM_CXSCREEN) - (rc.right - rc.left)) / 2;
-		int cy = (GetSystemMetrics(SM_CYSCREEN) - (rc.bottom - rc.top)) / 2;
-		SetWindowPos(this->GethWnd(), NULL, cx, cy, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER | SWP_NOACTIVATE);
+		RECT rc = { 0, 0, (LONG)width, (LONG)height };
+		AdjustWindowRect(&rc, dwStyle, FALSE);
+
+		int cx = 0;
+		int cy = 0;
+		CenterWindowInWorkArea(this->GethWnd(), rc.right - rc.left, rc.bottom - rc.top, cx, cy);
+
+		SetWindowPos(this->GethWnd(), HWND_NOTOPMOST, cx, cy, rc.right - rc.left, rc.bottom - rc.top,
+			SWP_NOZORDER | SWP_NOACTIVATE);
 	}
 	else
 	{
-		int fsWidth = GetSystemMetrics(SM_CXSCREEN);
-		int fsHeight = GetSystemMetrics(SM_CYSCREEN);
-		SetWindowPos(this->GethWnd(), HWND_TOP, 0, 0, fsWidth, fsHeight, SWP_NOACTIVATE);
+		SetWindowPos(this->GethWnd(), HWND_TOP, 0, 0, width, height, SWP_NOACTIVATE);
 	}
+
+	this->InitSize(width, height);
 }
 
 MSG CWINHANDLE::winLoop()
@@ -322,7 +406,8 @@ void CWINHANDLE::UpdateWndActive()
 
 void CWINHANDLE::SetWndMode(mu_boolean bActive)
 {
-	WndMode = bActive;
+	// Wrapper de compatibilidade: usa os valores legados do registro.
+	this->SetWindowMode(bActive ? WINDOW_MODE_WINDOWED : WINDOW_MODE_FULLSCREEN);
 }
 
 mu_boolean CWINHANDLE::CheckWndMode()
@@ -330,82 +415,176 @@ mu_boolean CWINHANDLE::CheckWndMode()
 	return WndMode;
 }
 
-void CWINHANDLE::ToggleWindowMode()
+mu_uint8 CWINHANDLE::GetWindowMode() const
 {
-	WndMode = !WndMode;
+	if (!WndMode)
+		return WINDOW_MODE_FULLSCREEN;
+
+	return Borderless ? WINDOW_MODE_BORDERLESS : WINDOW_MODE_WINDOWED;
+}
+
+mu_boolean CWINHANDLE::CheckBorderless() const
+{
+	return Borderless;
+}
+
+void CWINHANDLE::SetWindowMode(mu_uint8 mode)
+{
+	if (mode > WINDOW_MODE_BORDERLESS)
+		mode = WINDOW_MODE_WINDOWED;
+
+	Borderless = (mode == WINDOW_MODE_BORDERLESS);
+	WndMode = (mode != WINDOW_MODE_FULLSCREEN);
 
 	leaf::CRegKey regkey;
 	regkey.SetKey(leaf::CRegKey::_HKEY_CURRENT_USER, "SOFTWARE\\Webzen\\Mu2\\Config");
-	regkey.WriteDword("WindowMode", WndMode ? 1 : 0);
+	regkey.WriteDword("WindowMode", mode);
 
-	if (WndMode)
+	this->ApplyWindowMode();
+}
+
+void CWINHANDLE::ToggleWindowMode()
+{
+	// Janela -> Borderless -> Fullscreen -> Janela
+	mu_uint8 next = WINDOW_MODE_WINDOWED;
+
+	switch (this->GetWindowMode())
 	{
-		ChangeDisplaySettings(NULL, 0);
+	case WINDOW_MODE_WINDOWED:
+		next = WINDOW_MODE_BORDERLESS;
+		break;
+	case WINDOW_MODE_BORDERLESS:
+		next = WINDOW_MODE_FULLSCREEN;
+		break;
+	default:
+		next = WINDOW_MODE_WINDOWED;
+		break;
+	}
 
-		wndIndex = res_setting.ClampWindowModeIndex(wndIndex);
-		regkey.WriteDword("Resolution", wndIndex);
-		m_Resolution = wndIndex;
+	this->SetWindowMode(next);
 
+	leaf::CRegKey regkey;
+	regkey.SetKey(leaf::CRegKey::_HKEY_CURRENT_USER, "SOFTWARE\\Webzen\\Mu2\\Config");
+	regkey.WriteDword("Resolution", wndIndex);
+	m_Resolution = wndIndex;
+}
+
+void CWINHANDLE::ResolveRenderSize(mu_uint32& width, mu_uint32& height)
+{
+	if (this->GetWindowMode() != WINDOW_MODE_BORDERLESS)
+	{
 		ResolutionConfig* conf = this->LoadCurrentConfig();
 
-		DWORD dwStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_BORDER | WS_CLIPCHILDREN;
-		SetWindowLongPtr(hWnd, GWL_STYLE, dwStyle);
-
-		RECT rc = { 0, 0, (LONG)conf->width, (LONG)conf->height };
-		AdjustWindowRect(&rc, dwStyle, FALSE);
-
-		int cx = (GetSystemMetrics(SM_CXSCREEN) - (rc.right - rc.left)) / 2;
-		int cy = (GetSystemMetrics(SM_CYSCREEN) - (rc.bottom - rc.top)) / 2;
-
-		SetWindowPos(hWnd, HWND_NOTOPMOST, cx, cy, rc.right - rc.left, rc.bottom - rc.top,
-			SWP_FRAMECHANGED | SWP_SHOWWINDOW);
-
-		this->InitSize(conf->width, conf->height);
+		if (conf)
+		{
+			width = (mu_uint32)conf->width;
+			height = (mu_uint32)conf->height;
+		}
 	}
 	else
 	{
-		int fsWidth = GetSystemMetrics(SM_CXSCREEN);
-		int fsHeight = GetSystemMetrics(SM_CYSCREEN);
-
-		DEVMODE dmScreenSettings = {};
-		dmScreenSettings.dmSize = sizeof(dmScreenSettings);
-		dmScreenSettings.dmPelsWidth = fsWidth;
-		dmScreenSettings.dmPelsHeight = fsHeight;
-		dmScreenSettings.dmBitsPerPel = 32;
-		dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-		ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN);
-
-		SetWindowLongPtr(hWnd, GWL_STYLE, WS_POPUP | WS_VISIBLE | WS_CLIPCHILDREN);
-		SetWindowPos(hWnd, HWND_TOP, 0, 0, fsWidth, fsHeight,
-			SWP_FRAMECHANGED | SWP_SHOWWINDOW);
-
-		this->InitSize(fsWidth, fsHeight);
+		width = GetSystemMetrics(SM_CXSCREEN);
+		height = GetSystemMetrics(SM_CYSCREEN);
 	}
+
+	if (width == 0 || height == 0)
+	{
+		width = GetSystemMetrics(SM_CXSCREEN);
+		height = GetSystemMetrics(SM_CYSCREEN);
+	}
+
+	if (this->GetWindowMode() == WINDOW_MODE_FULLSCREEN
+		&& !IsDisplayModeSupported(width, height))
+	{
+		width = GetSystemMetrics(SM_CXSCREEN);
+		height = GetSystemMetrics(SM_CYSCREEN);
+	}
+}
+
+bool CWINHANDLE::ApplyFullscreenResolution(mu_uint32 width, mu_uint32 height)
+{
+	DEVMODE dm = {};
+	dm.dmSize = sizeof(dm);
+
+	if (!EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &dm))
+		return false;
+
+	dm.dmPelsWidth = width;
+	dm.dmPelsHeight = height;
+	dm.dmBitsPerPel = 32;
+	dm.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+
+	return ChangeDisplaySettings(&dm, CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL;
+}
+
+void CWINHANDLE::ApplyWindowMode()
+{
+	if (!hWnd)
+		return;
+
+	mu_uint32 width = 0;
+	mu_uint32 height = 0;
+	this->ResolveRenderSize(width, height);
+
+	mu_uint8 mode = this->GetWindowMode();
+
+	if (mode == WINDOW_MODE_FULLSCREEN && !this->ApplyFullscreenResolution(width, height))
+	{
+		// Falha ao trocar o modo de video: mantem o jogo visivel em borderless.
+		this->Borderless = true;
+		this->WndMode = true;
+		mode = this->GetWindowMode();
+		width = GetSystemMetrics(SM_CXSCREEN);
+		height = GetSystemMetrics(SM_CYSCREEN);
+	}
+	else if (mode == WINDOW_MODE_WINDOWED)
+	{
+		ChangeDisplaySettings(NULL, 0);
+	}
+
+	const DWORD dwStyle = GetWindowStyleForMode(mode);
+	SetWindowLongPtr(hWnd, GWL_STYLE, dwStyle);
+	SetWindowLongPtr(hWnd, GWL_EXSTYLE, (mode == WINDOW_MODE_WINDOWED) ? WS_EX_APPWINDOW : 0);
+
+	if (mode == WINDOW_MODE_WINDOWED)
+	{
+		RECT rc = { 0, 0, (LONG)width, (LONG)height };
+		AdjustWindowRect(&rc, dwStyle, FALSE);
+
+		int x = 0;
+		int y = 0;
+		CenterWindowInWorkArea(hWnd, rc.right - rc.left, rc.bottom - rc.top, x, y);
+
+		SetWindowPos(hWnd, HWND_NOTOPMOST, x, y, rc.right - rc.left, rc.bottom - rc.top,
+			SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+	}
+	else
+	{
+		SetWindowPos(hWnd, HWND_TOP, 0, 0, width, height,
+			SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+	}
+
+	this->InitSize(width, height);
 }
 
 void CWINHANDLE::SetDisplayIndex(mu_uint8 index, mu_boolean Fontload)
 {
-	ResolutionConfig* data = res_setting.FindInfoByIndex(index);
-	const bool is800x600 = (data && ((data->width == 800 && data->height == 600) || data->text_name == "800x600"));
-
-	if (this->CheckWndMode() || is800x600)
-	{
-		index = (mu_uint8)res_setting.ClampWindowModeIndex(index);
-	}
-
+	index = (mu_uint8)res_setting.ClampWindowModeIndex(index);
 	wndIndex = index;
 
 	ResolutionConfig* conf = this->LoadCurrentConfig();
+	if (conf == NULL)
+		return;
 
-	this->InitSize(conf->width, conf->height);
+	mu_uint32 width = 0;
+	mu_uint32 height = 0;
+	this->ResolveRenderSize(width, height);
 
+	this->InitSize(width, height);
 	this->SetFontSize(conf->fontsize);
 
-
-	if (Fontload == false)
-	{
-		this->Resize(conf->width, conf->height);
-	}
+	if (Fontload == false && this->GethWnd())
+		this->ApplyWindowMode();
 }
 
 mu_uint8 CWINHANDLE::GetDisplayIndex()

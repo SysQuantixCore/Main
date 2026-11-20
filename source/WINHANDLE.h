@@ -14,6 +14,14 @@ typedef double					mu_double;
 #define TRAY_ID_ICON			(WM_USER + 100)
 #define TRAY_ID_MESSAGE			(WM_USER + 101)
 
+// Valores gravados na chave "WindowMode" (compativel com o registro antigo: 0=fullscreen, 1=janela)
+enum WINDOW_MODE_TYPE
+{
+	WINDOW_MODE_FULLSCREEN	= 0,
+	WINDOW_MODE_WINDOWED	= 1,
+	WINDOW_MODE_BORDERLESS	= 2,
+};
+
 //#define 
 #include "Resolutions.h"
 
@@ -26,6 +34,7 @@ public:
 	virtual~CWINHANDLE();
 	void Release();
 	HWND Create(HINSTANCE hCurrentInst, mu_uint32 RenderSizeX, mu_uint32 RenderSizeY);
+	void ApplyWindowTitleGfx(bool bModern);
 	void Destroyer();
 	void InitSize(mu_uint32 RenderSizeX, mu_uint32 RenderSizeY);
 	void SetFontSize(mu_uint32 FontSize);
@@ -40,6 +49,10 @@ public:
 	void UpdateWndActive();
 	void SetWndMode(mu_boolean bActive);
 	mu_boolean CheckWndMode();
+	void SetWindowMode(mu_uint8 mode);
+	mu_uint8 GetWindowMode() const;
+	mu_boolean CheckBorderless() const;
+	void ApplyWindowMode();
 	void ToggleWindowMode();
 	void SetDisplayIndex(mu_uint8 index, mu_boolean Fontload = true);
 	mu_uint8 GetDisplayIndex();
@@ -57,11 +70,16 @@ public:
 	static CWINHANDLE* Instance();
 	static LONG FAR PASCAL WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 private:
+	void ResolveRenderSize(mu_uint32& width, mu_uint32& height);
+	bool ApplyFullscreenResolution(mu_uint32 width, mu_uint32 height);
+
+private:
 	HWND hWnd;
 	HINSTANCE hInstance;
 	NOTIFYICONDATA nid;
 	mu_uint8 wndIndex;
 	mu_boolean WndMode;
+	mu_boolean Borderless;
 	mu_boolean WndActive;
 	mu_boolean WndIconic;
 	mu_float iWinWidth;

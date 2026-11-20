@@ -289,6 +289,7 @@ bool SEASON3B::CNewUIHeroPositionInfo::UpdateKeyEvent()
 
 bool SEASON3B::CNewUIHeroPositionInfo::Update()
 {
+
 #if MAIN_UPDATE > 603
 	if (GMProtect->shutdown_oficial_helper() == true)
 	{

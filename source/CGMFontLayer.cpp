@@ -623,7 +623,9 @@ void CGMFontLayer::RenderWave(int iPos_x, int iPos_y, const unicode::t_char* psz
 	glGetFloatv(GL_CURRENT_COLOR, fCurColor);
 
 	SIZE TextSize;
-	g_pRenderText->SetTextColor(0);
+	// Com cor 0 o runtime_render_map ignora completamente o desenho (inclusive
+	// o contorno preto). Usa preto opaco para preservar o contorno do efeito.
+	g_pRenderText->SetTextColor(0xFF000000);
 
 	this->RenderText(iPos_x, iPos_y, pszText, iWidth, iHeight, iSort, &TextSize, true);
 

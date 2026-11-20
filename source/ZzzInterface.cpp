@@ -7841,7 +7841,12 @@ void SendMacroChat(char* Text)
 #ifdef _DEBUG
 		MacroTime = 10;
 #else
-		MacroTime = standlimit(100);
+	{
+		// standlimit() escala com o FPS; nunca pode passar de 100, senao a
+		// barra de macro e desenhada com o dobro da largura e vaza.
+		DWORD dwTime = standlimit(100);
+		MacroTime = (dwTime > 100) ? 100 : (int)dwTime;
+	}
 #endif
 	}
 	}
@@ -8379,10 +8384,14 @@ void RenderTimes()
 	{
 		float Width = 160.f;
 		float Height = 8.f;
-		float x = (GetScreenWidth() - Width) / 2.f;
+		// Centraliza pela largura total da tela (a barra de macro e fixa nela).
+		// GetScreenWidth() encolhe quando janelas abrem e deslocava a barra.
+		float x = (GetWindowsX - Width) / 2.f;
 		float y = pos_botton(429.f) - 18.f;
 
 		int Time = (double)MacroTime * (int)Width / 100;
+		if (Time > (int)Width) Time = (int)Width;
+		if (Time < 0) Time = 0;
 		EnableAlphaTest();
 		g_pRenderText->RenderText((int)x, (int)y - 12, "Macro Time", (int)Width, 0, RT3_SORT_CENTER);
 		RenderBar(x, y, Width, Height, (float)Time);

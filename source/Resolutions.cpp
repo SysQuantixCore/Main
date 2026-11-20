@@ -69,14 +69,14 @@ void CSettings::Load(const char* filename)
 		data_info.width_far_increase = child_io.attribute("width_far_increase").as_float();
 		data_info.width_near = child_io.attribute("width_near").as_float();
 		data_info.width_near_increase = child_io.attribute("width_near_increase").as_float();
-		//data_info.interface_scale_x = child_io.attribute("index").as_float();
-		//data_info.interface_scale_y = child_io.attribute("index").as_float();
-		//data_info.tvt_scale = child_io.attribute("tvt_scale").as_float();
-		//data_info.mu_legend_scale = child_io.attribute("mu_legend_scale").as_float();
+		data_info.interface_scale_x = child_io.attribute("interface_scale_x").as_float(1.0f);
+		data_info.interface_scale_y = child_io.attribute("interface_scale_y").as_float(1.0f);
+		data_info.tvt_scale = child_io.attribute("tvt_scale").as_float(0.15f);
+		data_info.mu_legend_scale = child_io.attribute("mu_legend_scale").as_float(0.5f);
 
 		data_info.ParseResolution();
 
-		if (data_info.width == 800 && data_info.height == 600)
+		if (data_info.width <= 0 || data_info.height <= 0)
 			continue;
 
 		settings.push_back(data_info);
@@ -119,6 +119,16 @@ int CSettings::FindInfoByIndex(const std::string text_name)
 	return -1;
 }
 
+bool CSettings::HasIndex(int idx) const
+{
+	auto it = std::find_if(settings.begin(), settings.end(),
+		[idx](const ResolutionConfig& res) {
+			return res.index == idx;
+		});
+
+	return it != settings.end();
+}
+
 void CSettings::FindResolutionByIndex(int idx, unsigned int* width, unsigned int* height, int* fontsize)
 {
 	ResolutionConfig* data = this->FindInfoByIndex(idx);
@@ -132,26 +142,30 @@ void CSettings::FindResolutionByIndex(int idx, unsigned int* width, unsigned int
 
 bool CSettings::IsWindowModeResolution(int width, int height)
 {
-	return (width == 1024 && height == 600);
+	// Qualquer resolucao valida pode ser usada em janela (inclui 16:9, 16:10 e 21:9).
+	return (width >= 640 && height >= 480);
 }
 
 bool CSettings::IsWindowModeResolution(const std::string& text_name)
 {
-	return text_name == "1024x600";
+	const size_t sep = text_name.find('x');
+
+	if (sep == std::string::npos)
+		return false;
+
+	return IsWindowModeResolution(atoi(text_name.substr(0, sep).c_str()),
+		atoi(text_name.substr(sep + 1).c_str()));
 }
 
 int CSettings::ClampWindowModeIndex(int idx)
 {
-	int widescreen = this->FindInfoByIndex(std::string("1024x600"));
+	// Mantem apenas indices que existem no Resolutions.xml.
+	if (HasIndex(idx))
+		return idx;
 
-	if (widescreen >= 0)
-	{
-		ResolutionConfig* data = this->FindInfoByIndex(idx);
-		if (data && data->text_name == "1024x600" && data->index == idx)
-			return idx;
-
-		return widescreen;
-	}
+	int fallback = FindInfoByIndex(std::string("1024x600"));
+	if (fallback >= 0)
+		return fallback;
 
 	return 0;
 }
