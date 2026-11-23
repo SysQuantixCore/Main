@@ -284,6 +284,22 @@ bool SEASON3B::CNewUIHeroPositionInfo::UpdateMouseEvent()
 
 bool SEASON3B::CNewUIHeroPositionInfo::UpdateKeyEvent()
 {
+	// Tecla 'V': inicia (ou pausa) o MuHelper, mesmo efeito do botao do HUD.
+	if (SEASON3B::IsPress('V') && Hero != NULL && !g_pNewUISystem->CheckKeyUse())
+	{
+		if (!gmAIController->IsRunning())
+		{
+			if (gmAIController->CanUseAIController())
+				SendRequestStartHelper(false);
+		}
+		else
+		{
+			SendRequestStartHelper(true);
+		}
+
+		return false;
+	}
+
 	return true;
 }
 

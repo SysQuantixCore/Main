@@ -184,7 +184,7 @@ bool SEASON3B::CNewUINPCShop::UpdateKeyEvent()
 		return true;
 	}
 
-	if (SEASON3B::IsRepeat(VK_SHIFT) && SEASON3B::IsPress('L'))
+	if (SEASON3B::IsRepeat(VK_SHIFT) && SEASON3B::IsPress('R'))
 	{
 		SendRequestRepair(255, 0);
 		return false;

@@ -838,8 +838,8 @@ void CGMHeadChat::RenderBoolean(int x, int y, CHAT* c)
 
 		const float fNameDrawX = fTextX - (fNameBoxWidth - RenderBoxSize.cx) * 0.5f;
 
-		// Barra azul do nome: menor que o balao, com brilho em cima/esquerda
-		// e sombra embaixo/direita para dar profundidade.
+		// Barra do nome: azul para jogadores, vermelho para monstros (inimigo).
+		// Menor que o balao, com brilho em cima/esquerda e sombra embaixo/direita.
 		if (bHasMessage)
 		{
 			const float fBarX = fNameDrawX + 3.f;
@@ -847,18 +847,32 @@ void CGMHeadChat::RenderBoolean(int x, int y, CHAT* c)
 			const float fBarW = fNameBoxWidth - 6.f;
 			const float fBarH = (float)iLineHeight - 1.f;
 
+			const bool bEnemy = (pCharacter != NULL && pCharacter->GetKind() == KIND_MONSTER);
+
+			const float fFaceR = bEnemy ? 1.00f : 0.35f;
+			const float fFaceG = bEnemy ? 0.25f : 0.68f;
+			const float fFaceB = bEnemy ? 0.25f : 1.00f;
+
+			const float fLightR = bEnemy ? 1.00f : 0.70f;
+			const float fLightG = bEnemy ? 0.60f : 0.90f;
+			const float fLightB = bEnemy ? 0.60f : 1.00f;
+
+			const float fDarkR = bEnemy ? 0.45f : 0.08f;
+			const float fDarkG = bEnemy ? 0.05f : 0.30f;
+			const float fDarkB = bEnemy ? 0.05f : 0.65f;
+
 			EnableAlphaTest();
 
 			// Scale=false: as coordenadas do nome ja estao em pixels de tela,
 			// o RenderTextClipped nao aplica g_fScreenRate.
-			glColor4f(0.35f, 0.68f, 1.00f, 0.85f);
+			glColor4f(fFaceR, fFaceG, fFaceB, 0.85f);
 			RenderColor(fBarX, fBarY, fBarW, fBarH, 0.f, 0, false);
 
-			glColor4f(0.70f, 0.90f, 1.00f, 0.95f);
+			glColor4f(fLightR, fLightG, fLightB, 0.95f);
 			RenderColor(fBarX, fBarY, fBarW, 1.f, 0.f, 0, false);
 			RenderColor(fBarX, fBarY, 1.f, fBarH, 0.f, 0, false);
 
-			glColor4f(0.08f, 0.30f, 0.65f, 0.95f);
+			glColor4f(fDarkR, fDarkG, fDarkB, 0.95f);
 			RenderColor(fBarX, fBarY + fBarH - 1.f, fBarW, 1.f, 0.f, 0, false);
 			RenderColor(fBarX + fBarW - 1.f, fBarY, 1.f, fBarH, 0.f, 0, false);
 

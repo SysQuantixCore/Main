@@ -898,7 +898,7 @@ bool SEASON3B::CNewUIMyInventory::UpdateKeyEvent()
 		}
 		return false;
 	}
-	else if (SEASON3B::IsPress('L') == true && m_bRepairEnableLevel == true)
+	else if (SEASON3B::IsPress('R') == true && m_bRepairEnableLevel == true)
 	{
 		if (!g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_NPCSHOP))
 		{

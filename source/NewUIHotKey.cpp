@@ -203,7 +203,7 @@ bool SEASON3B::CNewUIHotKey::UpdateKeyEvent()
 			return false;
 		}
 
-		if (SEASON3B::IsPress('I') || SEASON3B::IsPress('V'))
+		if (SEASON3B::IsPress('I'))
 		{
 			if (g_pNPCShop->IsSellingItem() == false)
 			{
@@ -436,7 +436,7 @@ bool SEASON3B::CNewUIHotKey::UpdateKeyEvent()
 		return true;
 	}
 
-	if (SEASON3B::IsPress('I') || SEASON3B::IsPress('V'))
+	if (SEASON3B::IsPress('I'))
 	{
 		if (g_pNPCShop->IsSellingItem() == false)
 		{
