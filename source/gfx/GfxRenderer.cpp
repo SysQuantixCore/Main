@@ -129,6 +129,8 @@ namespace gfx
         m_Batch.clear();
         m_Batch.reserve(8192 * VERTEX_FLOATS);
         m_BatchEnabled = Config::Instance().GetBatch();
+        m_ClientArray = Config::Instance().GetClientArray();
+        m_Buffer.SetClientArray(m_ClientArray);
         m_StateGen = 0;
         m_BatchGen = 0;
 
@@ -1008,6 +1010,37 @@ namespace gfx
         const double t0 = gfx::TraceIsEnabled() ? gfx::NowMs() : 0.0;
         ApplyUniforms();
         const double t1 = gfx::TraceIsEnabled() ? gfx::NowMs() : 0.0;
+
+        // ---- Client arrays (Fase 2, alternativa ao mapped VBO) ----
+        // Expande para triangulos em m_Expanded e desenha direto do CPU, sem
+        // VBO/upload. O driver copia internamente no glDrawArrays (compat profile).
+        if (m_ClientArray)
+        {
+            std::vector<float>& out = m_Expanded;
+            out.clear();
+            AppendExpanded(out, mode, vertices, vertexCount);
+            if (!out.empty())
+            {
+                m_Buffer.DrawClient(GL_TRIANGLES, out.data(),
+                                    static_cast<GLsizei>(out.size() / VERTEX_FLOATS));
+                ++m_GlDrawCount;
+            }
+            if (gfx::TraceIsEnabled())
+            {
+                const double t2 = gfx::NowMs();
+                g_Perf.uniformsMs += (t1 - t0);
+                g_Perf.drawMs += (t2 - t1);  // inclui copia ClientArray
+                ++g_Perf.frames;
+                if ((g_Perf.frames % 2000) == 0)
+                {
+                    Trace("[gfx] PERF/client: uniforms=%.1f draw=%.1f total=%.1f us",
+                          g_Perf.uniformsMs * 1000.0 / g_Perf.frames,
+                          g_Perf.drawMs * 1000.0 / g_Perf.frames,
+                          (g_Perf.uniformsMs + g_Perf.drawMs) * 1000.0 / g_Perf.frames);
+                }
+            }
+            return;
+        }
 
         // ---- Batching (Fase 2) ----
         // Acumula primitivas com o MESMO estado num unico draw. O estado

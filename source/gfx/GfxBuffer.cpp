@@ -233,6 +233,37 @@ namespace gfx
         gfx::raw::fnDrawArrays(mode, first, count);
     }
 
+    void GfxBuffer::DrawClient(GLenum mode, const float* vertices, GLsizei count)
+    {
+        if (vertices == nullptr || count <= 0)
+        {
+            return;
+        }
+
+        // Client arrays: os atributos apontam DIRETO para o array CPU. Sem VBO,
+        // sem glBufferSubData - o driver copia internamente no glDrawArrays
+        // (mesmo caminho que o fixed-function usava, mas com nosso shader).
+        if (m_VaoBound)
+        {
+            glBindVertexArray(0);
+            m_VaoBound = false;
+        }
+        glBindBuffer(GL_ARRAY_BUFFER, 0);  // client arrays exigem binding 0
+
+        const GLsizei stride = static_cast<GLsizei>(kVertexStride);
+        glEnableVertexAttribArray(ATTRIB_POSITION);
+        glEnableVertexAttribArray(ATTRIB_TEXCOORD);
+        glEnableVertexAttribArray(ATTRIB_COLOR);
+        glVertexAttribPointer(ATTRIB_POSITION, 3, GL_FLOAT, GL_FALSE, stride,
+                              reinterpret_cast<const void*>(vertices + VERTEX_POS_OFFSET));
+        glVertexAttribPointer(ATTRIB_TEXCOORD, 2, GL_FLOAT, GL_FALSE, stride,
+                              reinterpret_cast<const void*>(vertices + VERTEX_TEXCOORD_OFFSET));
+        glVertexAttribPointer(ATTRIB_COLOR, 4, GL_FLOAT, GL_FALSE, stride,
+                              reinterpret_cast<const void*>(vertices + VERTEX_COLOR_OFFSET));
+
+        gfx::raw::fnDrawArrays(mode, 0, count);
+    }
+
     void GfxBuffer::BeginFrame()
     {
         if (!m_Mapped || m_MappedPtr == nullptr || m_RegionSize == 0)

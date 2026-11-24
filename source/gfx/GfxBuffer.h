@@ -50,6 +50,11 @@ namespace gfx
         // Desvincula o VAO antes de codigo que usa VAO proprio (ImGui/ScaleForm).
         void Unbind();
 
+        // Ativa o caminho de client arrays (vertex data direto do CPU, sem VBO/upload).
+        void SetClientArray(bool enabled) { m_ClientArray = enabled; }
+        // Desenha 'count' vertices lidos diretamente de 'vertices' (array CPU intercalado).
+        void DrawClient(GLenum mode, const float* vertices, GLsizei count);
+
         // Inicio de frame: orphana o buffer para reescrever do inicio sem
         // sobrescrever dados que a GPU ainda esteja usando.
         void BeginFrame();
@@ -58,6 +63,7 @@ namespace gfx
         GLuint m_Vao = 0;
         GLuint m_Vbo = 0;
         size_t m_CapacityVertices = 0;
+        bool   m_ClientArray = false;
 
         // Caminho persistently mapped (Fase 2)
         bool   m_Mapped = false;

@@ -193,6 +193,7 @@ namespace gfx
         // Batching: vertices acumulados do lote corrente.
         std::vector<float> m_Batch;
         bool   m_BatchEnabled = false;
+        bool   m_ClientArray = false;
         unsigned long long m_StateGen = 0;   // incrementado a cada mudanca de estado
         unsigned long long m_BatchGen = 0;   // geracao do lote acumulado
         unsigned long long m_GlDrawCount = 0; // draws GL emitidos (para medir batching)

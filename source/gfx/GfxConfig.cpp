@@ -232,6 +232,7 @@ namespace gfx
         ReadIniBool("Graphics", "Batch", true, m_Batch);
         ReadIniBool("Graphics", "Mapped", true, m_Mapped);
         ReadIniBool("Graphics", "Bindless", true, m_Bindless);
+        ReadIniBool("Graphics", "ClientArray", true, m_ClientArray);
     }
 
     void Config::ApplyCommandLine()

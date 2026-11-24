@@ -59,6 +59,7 @@ namespace gfx
         bool      GetBatch()       const { return m_Batch; }
         bool      GetMapped()      const { return m_Mapped; }
         bool      GetBindless()    const { return m_Bindless; }
+        bool      GetClientArray() const { return m_ClientArray; }
 
         bool IsModern() const { return m_Backend == Backend::Modern; }
         bool IsLegacy() const { return m_Backend == Backend::Legacy; }
@@ -95,6 +96,7 @@ namespace gfx
         bool      m_Batch       = false;
         bool      m_Mapped      = false;
         bool      m_Bindless    = false;
+        bool      m_ClientArray = true;   // Fase 2: client arrays direto do CPU (sem upload)
         bool      m_Loaded     = false;
 
         std::string m_IniPath      = "Graphics.ini";

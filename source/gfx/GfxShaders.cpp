@@ -59,6 +59,8 @@ out vec4 FragColor;
 
 void main()
 {
+    vec4 vColorClamped = clamp(vColor, 0.0, 1.0);  // fixed-function clampeava a cor do vertice
+
     vec4 tex = vec4(1.0, 1.0, 1.0, 1.0);
     if (uUseTexture != 0)
     {
@@ -66,20 +68,23 @@ void main()
     }
 
     vec4 c;
-    if (uTexEnvMode == 1)          // GL_ADD
+    if (uTexEnvMode == 1)          // GL_ADD: C = Cs*Cd + Cd
     {
-        c = tex * vColor + vColor;
-        c.a = min(c.a, 1.0);
+        c = tex * vColorClamped + vColorClamped;
     }
-    else if (uTexEnvMode == 2)     // GL_REPLACE
+    else if (uTexEnvMode == 2)     // GL_REPLACE: C = Cs (textura crua)
     {
         c = tex;
     }
-    else                           // GL_MODULATE
+    else                           // GL_MODULATE: C = Cs*Cd
     {
-        c = tex * vColor;
+        c = tex * vColorClamped;
     }
-    c.a = tex.a * vColor.a;
+    // Alpha: decisao validada - vem da textura * cor primaria em todos os modos
+    // (corrige sprites que desapareciam com alpha test).
+    c.a = tex.a * vColorClamped.a;
+    // Fixed-function clampava a cor do fragmento em [0,1] antes do blending.
+    c = clamp(c, 0.0, 1.0);
 
     if (uUseAlphaTest != 0)
     {
@@ -172,6 +177,9 @@ void main()
     // passam a usar o alpha da textura. Deve ser reavaliado na Fase 2
     // (sugestao: uniform "uUseColorAlpha" para ligar/desligar).
     c.a = tex.a * vColor.a;
+
+    // Fixed-function clampava a cor do fragmento antes do blending.
+    c = clamp(c, 0.0, 1.0);
 
     if (uUseAlphaTest != 0)
     {
