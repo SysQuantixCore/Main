@@ -3436,6 +3436,13 @@ bool SEASON3B::CNewUIMyInventory::InventoryProcess()
 	}
 	else
 	{
+		// Right-click no item do inventario -> equipar (feature removida na base 5.2).
+		if (success && GetRepairMode() == REPAIR_MODE_OFF && SEASON3B::IsPress(VK_RBUTTON))
+		{
+			if (EquipItemByRightClick())
+				return true;
+		}
+
 		if (success && GetRepairMode() == REPAIR_MODE_ON && SEASON3B::IsPress(VK_RBUTTON))
 		{
 			int InvenIndex = -1;
@@ -4313,13 +4320,68 @@ bool SEASON3B::CNewUIMyInventory::IsItemAutoMove()
 	return m_bItemAutoMove;
 }
 
+bool SEASON3B::CNewUIMyInventory::EquipItemByRightClick()
+{
+	// Usado pelo right-click no inventario: equipa o item sob o mouse no slot
+	// correspondente. Replica a logica que o left-click usa em MoveItemProcess.
+	CNewUIPickedItem* pPickedItem = CNewUIInventoryCtrl::GetPickedItem();
+	if (pPickedItem != NULL)   // ja ha item segurado -> nao equipar
+		return false;
+	if (GetRepairMode() != REPAIR_MODE_OFF || EquipmentItem)
+		return false;
+	if (g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_TRADE)
+		|| g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_STORAGE)
+		|| g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_NPCSHOP))
+		return false;
+
+	int InvenIndex = -1;
+	ITEM* pItemObj = this->FindItemAtPt(MouseX, MouseY, &InvenIndex);
+	if (!pItemObj)
+		return false;
+
+	Script_Item* pItemAttr = GMItemMng->find(pItemObj->Type);
+	if (!pItemAttr)
+		return false;
+
+	int iDstIndex = pItemAttr->m_byItemSlot;
+	if (!CharacterMachine->CheckEquipment(iDstIndex))
+		return false;
+
+	ITEM* pEquip = CharacterMachine->GetOnlyEquipment(iDstIndex);
+	if (pEquip->Type != -1)
+	{
+		// slot ocupado: tenta o proximo (arma direita / anel direito)
+		if ((iDstIndex == EQUIPMENT_WEAPON_RIGHT && !pItemAttr->TwoHand) || iDstIndex == EQUIPMENT_RING_RIGHT)
+		{
+			iDstIndex++;
+			pEquip = &CharacterMachine->Equipment[iDstIndex];
+		}
+		if (pEquip->Type != -1)
+			return false;
+	}
+
+	CNewUIInventoryCtrl* pSrc = this->GetInventoryCtrl(InvenIndex);
+	if (!pSrc || !this->IsEquipable(iDstIndex, pItemObj))
+		return false;
+
+	int iSrcIndex = this->GetInvenSlotIndex(pItemObj->x, pItemObj->y, InvenIndex);
+	ResetMouseRButton();
+	SetItemAutoMove(true);
+	m_bInventoryBase = NULL;
+	SendRequestEquipmentItem(REQUEST_EQUIPMENT_INVENTORY, iSrcIndex + MAX_EQUIPMENT_INDEX,
+	                         pItemObj, REQUEST_EQUIPMENT_INVENTORY, iDstIndex);
+	return true;
+}
+
 bool SEASON3B::CNewUIMyInventory::MoveItemProcess()
 {
 	CNewUIPickedItem* pPickedItem = CNewUIInventoryCtrl::GetPickedItem();
 
+	bool bHoldingVisibleItem = (pPickedItem != NULL && pPickedItem->IsVisible());
+
 	if (!(g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_TRADE)
 		|| g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_STORAGE)
-		|| g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_NPCSHOP)) && pPickedItem == NULL)
+		|| g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_NPCSHOP)) && !bHoldingVisibleItem)
 	{
 		if (SEASON3B::IsPress(VK_RBUTTON) && this->GetRepairMode() != REPAIR_MODE_ON && EquipmentItem == false)
 		{
@@ -4408,8 +4470,9 @@ bool SEASON3B::CNewUIMyInventory::MoveItemProcess()
 						else
 						{
 							CNewUIInventoryCtrl* pSrc = this->GetInventoryCtrl(InvenIndex);
+							bool bEquipable = this->IsEquipable(iDstIndex, pItemObj);
 
-							if (this->IsEquipable(iDstIndex, pItemObj) && pSrc != NULL /*&& CNewUIInventoryCtrl::CreatePickedItem(pSrc, pItemObj)*/)
+							if (bEquipable && pSrc != NULL /*&& CNewUIInventoryCtrl::CreatePickedItem(pSrc, pItemObj)*/)
 							{
 								SetItemAutoMove(true);
 

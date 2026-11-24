@@ -210,6 +210,7 @@ namespace SEASON3B
 
 		bool IsItemAutoMove();
 		bool MoveItemProcess();
+		bool EquipItemByRightClick();   // right-click no item do inventario -> equipar
 		void SetItemAutoMove(bool bItemAutoMove);
 		bool ProcessItemAutoMove(CNewUIInventoryCtrl* pNewInventory, BYTE SourceFlag);
 		bool ProcessMyInvenItemAutoMove(CNewUIInventoryCtrl* pNewInventory, BYTE TargetFlag);
