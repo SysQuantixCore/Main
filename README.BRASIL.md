@@ -153,7 +153,7 @@ Este projeto reconhece as contribuições históricas e os trabalhos relacionado
 
 ## 📦 Último Lançamento
 
-<badge color="success">Versão mais recente: v2.0.0.0</badge>
+<badge color="success">Versão mais recente: v2.0.0.2</badge>
 
 [![GitHub Release](https://img.shields.io/badge/GitHub-View%20All%20Releases-181717?style=flat&logo=github&logoColor=white)](https://github.com/SysQuantixCore/Main/releases/tag/2.0.0.0)
 
@@ -175,4 +175,3 @@ Open Development · AI-Assisted Engineering · Academic Research
 **Desenvolvido e mantido por Qubit - SysQuantixCore**
 
 Release (c) 2026 Qubit - SysQuantixCore
-
