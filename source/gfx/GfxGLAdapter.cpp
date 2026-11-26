@@ -61,8 +61,6 @@
 #undef glColorMask
 #undef glFrontFace
 #undef glClear
-#undef glFlush
-#undef SwapBuffers
 
 #include "gfx/GfxGLAdapter.h"
 #include "gfx/GfxRenderer.h"
@@ -135,7 +133,6 @@ namespace gfx
         void (APIENTRY *fnColorMask)(GLboolean r, GLboolean g, GLboolean b, GLboolean a) = &glColorMask;
         void (APIENTRY *fnFrontFace)(GLenum m)                           = &glFrontFace;
         void (APIENTRY *fnClear)(GLbitfield m)                           = &glClear;
-        void (APIENTRY *fnFlush)(void)                                  = &glFlush;
     }
 }
 
@@ -153,25 +150,6 @@ namespace
     {
         return gfx::Renderer::Instance().GetState();
     }
-
-    // Profiling: mede o tempo de operacoes de matriz/estado (so com verbose).
-    struct ScopedPerf
-    {
-        double t0;
-        bool matrix;
-        ScopedPerf(bool isMatrix) : t0(gfx::TraceIsEnabled() ? gfx::PerfNowMs() : 0.0), matrix(isMatrix) {}
-        ~ScopedPerf()
-        {
-            if (gfx::TraceIsEnabled())
-            {
-                const double dt = gfx::PerfNowMs() - t0;
-                if (matrix) gfx::PerfAddMatrix(dt);
-                else        gfx::PerfAddState(dt);
-            }
-        }
-    };
-    #define PERF_MATRIX() ScopedPerf _perf(true)
-    #define PERF_STATE()  ScopedPerf _perf(false)
 }
 
 // ---------------------------------------------------------------------
@@ -316,7 +294,6 @@ void gfxGLDrawArrays(GLenum mode, GLint first, GLsizei count)
 // ---------------------------------------------------------------------
 void gfxGLMatrixMode(GLenum mode)
 {
-    PERF_MATRIX();
     if (gfxModern())
     {
         switch (mode)
@@ -333,56 +310,48 @@ void gfxGLMatrixMode(GLenum mode)
 
 void gfxGLPushMatrix()
 {
-    PERF_MATRIX();
     if (gfxModern()) { gfx::Renderer::Instance().PushMatrix(); return; }
     gfx::raw::fnPushMatrix();
 }
 
 void gfxGLPopMatrix()
 {
-    PERF_MATRIX();
     if (gfxModern()) { gfx::Renderer::Instance().PopMatrix(); return; }
     gfx::raw::fnPopMatrix();
 }
 
 void gfxGLLoadIdentity()
 {
-    PERF_MATRIX();
     if (gfxModern()) { gfx::Renderer::Instance().LoadIdentity(); return; }
     gfx::raw::fnLoadIdentity();
 }
 
 void gfxGLLoadMatrixf(const GLfloat* m)
 {
-    PERF_MATRIX();
     if (gfxModern()) { gfx::Renderer::Instance().LoadMatrix(m); return; }
     gfx::raw::fnLoadMatrixf(m);
 }
 
 void gfxGLMultMatrixf(const GLfloat* m)
 {
-    PERF_MATRIX();
     if (gfxModern()) { gfx::Renderer::Instance().MultMatrix(m); return; }
     gfx::raw::fnMultMatrixf(m);
 }
 
 void gfxGLRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 {
-    PERF_MATRIX();
     if (gfxModern()) { gfx::Renderer::Instance().Rotatef(angle, x, y, z); return; }
     gfx::raw::fnRotatef(angle, x, y, z);
 }
 
 void gfxGLTranslatef(GLfloat x, GLfloat y, GLfloat z)
 {
-    PERF_MATRIX();
     if (gfxModern()) { gfx::Renderer::Instance().Translatef(x, y, z); return; }
     gfx::raw::fnTranslatef(x, y, z);
 }
 
 void gfxGLScalef(GLfloat x, GLfloat y, GLfloat z)
 {
-    PERF_MATRIX();
     if (gfxModern()) { gfx::Renderer::Instance().Scalef(x, y, z); return; }
     gfx::raw::fnScalef(x, y, z);
 }
@@ -392,7 +361,6 @@ void gfxGLScalef(GLfloat x, GLfloat y, GLfloat z)
 // ---------------------------------------------------------------------
 void gfxGLPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)
 {
-    PERF_MATRIX();
     if (gfxModern())
     {
         gfx::Renderer::Instance().SetProjectionPerspective(
@@ -423,7 +391,6 @@ void gfxGLOrtho2D(GLdouble l, GLdouble r, GLdouble b, GLdouble t)
 namespace { void gfxFlushBatchForState(); }
 void gfxGLEnable(GLenum cap)
 {
-    PERF_STATE();
     gfxFlushBatchForState();
     if (gfxModern())
     {
@@ -447,7 +414,6 @@ void gfxGLEnable(GLenum cap)
 
 void gfxGLDisable(GLenum cap)
 {
-    PERF_STATE();
     gfxFlushBatchForState();
     if (gfxModern())
     {
@@ -471,7 +437,6 @@ void gfxGLDisable(GLenum cap)
 
 void gfxGLAlphaFunc(GLenum func, GLclampf ref)
 {
-    PERF_STATE();
     gfxFlushBatchForState();
     if (gfxModern())
     {
@@ -498,7 +463,6 @@ void gfxGLAlphaFunc(GLenum func, GLclampf ref)
 
 void gfxGLFogf(GLenum pname, GLfloat param)
 {
-    PERF_STATE();
     gfxFlushBatchForState();
     if (gfxModern())
     {
@@ -518,7 +482,6 @@ void gfxGLFogf(GLenum pname, GLfloat param)
 
 void gfxGLFogfv(GLenum pname, const GLfloat* params)
 {
-    PERF_STATE();
     gfxFlushBatchForState();
     if (gfxModern())
     {
@@ -535,7 +498,6 @@ void gfxGLFogfv(GLenum pname, const GLfloat* params)
 
 void gfxGLTexEnvi(GLenum target, GLenum pname, GLint param)
 {
-    PERF_STATE();
     gfxFlushBatchForState();
     if (gfxModern())
     {
@@ -556,7 +518,6 @@ void gfxGLTexEnvi(GLenum target, GLenum pname, GLint param)
 
 void gfxGLTexEnvf(GLenum target, GLenum pname, GLfloat param)
 {
-    PERF_STATE();
     gfxFlushBatchForState();
     if (gfxModern())
     {
@@ -654,7 +615,6 @@ namespace
 
 void gfxGLBindTexture(GLenum target, GLuint texture)
 {
-    PERF_STATE();
     gfxFlushBatchForState();
     if (gfxModern() && gfx::Renderer::Instance().IsBindless() &&
         target == GL_TEXTURE_2D)
@@ -670,49 +630,42 @@ void gfxGLBindTexture(GLenum target, GLuint texture)
 
 void gfxGLBlendFunc(GLenum sfactor, GLenum dfactor)
 {
-    PERF_STATE();
     gfxFlushBatchForState();
     gfx::raw::fnBlendFunc(sfactor, dfactor);
 }
 
 void gfxGLDepthFunc(GLenum func)
 {
-    PERF_STATE();
     gfxFlushBatchForState();
     gfx::raw::fnDepthFunc(func);
 }
 
 void gfxGLDepthMask(GLboolean flag)
 {
-    PERF_STATE();
     gfxFlushBatchForState();
     gfx::raw::fnDepthMask(flag);
 }
 
 void gfxGLViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
-    PERF_STATE();
     gfxFlushBatchForState();
     gfx::raw::fnViewport(x, y, width, height);
 }
 
 void gfxGLScissor(GLint x, GLint y, GLsizei width, GLsizei height)
 {
-    PERF_STATE();
     gfxFlushBatchForState();
     gfx::raw::fnScissor(x, y, width, height);
 }
 
 void gfxGLColorMask(GLboolean r, GLboolean g, GLboolean b, GLboolean a)
 {
-    PERF_STATE();
     gfxFlushBatchForState();
     gfx::raw::fnColorMask(r, g, b, a);
 }
 
 void gfxGLFrontFace(GLenum mode)
 {
-    PERF_STATE();
     gfxFlushBatchForState();
     gfx::raw::fnFrontFace(mode);
 }
@@ -731,41 +684,4 @@ void gfxGLClear(GLbitfield mask)
         }
     }
     gfx::raw::fnClear(mask);
-}
-// ---------------------------------------------------------------------
-// Profiling de apresentacao (glFlush/SwapBuffers).
-// ---------------------------------------------------------------------
-void gfxGLFlush(void)
-{
-    const double t0 = gfx::TraceIsEnabled() ? gfx::PerfNowMs() : 0.0;
-    gfx::raw::fnFlush();
-    if (gfx::TraceIsEnabled())
-    {
-        static double s_Sum = 0.0;
-        static unsigned long s_Count = 0;
-        s_Sum += gfx::PerfNowMs() - t0;
-        if (++s_Count >= 60)
-        {
-            gfx::Trace("[gfx] PERF/present: glFlush=%.2fms/frame", s_Sum / s_Count);
-            s_Sum = 0.0; s_Count = 0;
-        }
-    }
-}
-
-BOOL gfxGLSwapBuffers(HDC hdc)
-{
-    const double t0 = gfx::TraceIsEnabled() ? gfx::PerfNowMs() : 0.0;
-    const BOOL r = ::SwapBuffers(hdc);
-    if (gfx::TraceIsEnabled())
-    {
-        static double s_Sum = 0.0;
-        static unsigned long s_Count = 0;
-        s_Sum += gfx::PerfNowMs() - t0;
-        if (++s_Count >= 60)
-        {
-            gfx::Trace("[gfx] PERF/present: SwapBuffers=%.2fms/frame", s_Sum / s_Count);
-            s_Sum = 0.0; s_Count = 0;
-        }
-    }
-    return r;
 }

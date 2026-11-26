@@ -1885,7 +1885,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLin
 #ifdef SHUTDOWN_SCALEFORM_INFO
 	// A ScaleForm.dll usa OpenGL fixed-function e nao funciona em core
 	// profile (renderer moderno).
-	if (!gfx::Config::Instance().GetCoreProfile())
+	if (!gfx::Config::Instance().IsModern())
 	{
 		gfxinit->runtime_connection();
 	}

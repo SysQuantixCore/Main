@@ -11,43 +11,9 @@
 // diagnostico para comparar com o estado do modulo gfx.
 extern bool TextureEnable;
 extern bool AlphaTestEnable;
-extern float FPS;   // contador de FPS do cliente (steady_clock.cpp) - so usado no trace verbose
 
 namespace gfx
 {
-    // -----------------------------------------------------------------
-    // Profiling de performance (so ativo com --gfx-verbose).
-    // Mede o tempo de cada secao do caminho de desenho para localizar o
-    // gargalo com dados, em vez de especular.
-    // -----------------------------------------------------------------
-    struct PerfSample
-    {
-        double uniformsMs = 0.0;
-        double uploadMs = 0.0;
-        double drawMs = 0.0;
-        double matrixMs = 0.0;   // tempo em operacoes de matriz (Rotate/Translate/etc.)
-        double stateMs = 0.0;    // tempo em mudancas de estado (Enable/Bind/Blend/etc.)
-        unsigned long frames = 0;
-        unsigned long matrixCalls = 0;
-        unsigned long stateCalls = 0;
-    };
-
-    static PerfSample g_Perf;
-
-    inline double NowMs()
-    {
-        LARGE_INTEGER t;
-        QueryPerformanceCounter(&t);
-        static double s_Freq = 0.0;
-        if (s_Freq == 0.0)
-        {
-            LARGE_INTEGER f;
-            QueryPerformanceFrequency(&f);
-            s_Freq = static_cast<double>(f.QuadPart);
-        }
-        return static_cast<double>(t.QuadPart) / s_Freq * 1000.0;
-    }
-
     namespace
     {
         // Converte o modo de primitiva legado para o equivalente suportado
@@ -975,12 +941,6 @@ namespace gfx
 
         static unsigned long s_DrawCount = 0;
         ++s_DrawCount;
-        if (gfx::TraceIsEnabled() && (s_DrawCount % 1000) == 0)
-        {
-            Trace("[gfx] FPS=%.1f prim=%lu glDraw=%llu\r\n",
-                  (double)FPS, s_DrawCount, m_GlDrawCount);
-            gfx::PerfReportAndReset();
-        }
         if (gfx::TraceIsEnabled() && (s_DrawCount % 2000) == 0)
         {
             // Razao entre primitivas recebidas e draws GL emitidos: quanto
@@ -1007,9 +967,7 @@ namespace gfx
                   (double)m_State.GetAlphaRef());
         }
 
-        const double t0 = gfx::TraceIsEnabled() ? gfx::NowMs() : 0.0;
         ApplyUniforms();
-        const double t1 = gfx::TraceIsEnabled() ? gfx::NowMs() : 0.0;
 
         // ---- Client arrays (Fase 2, alternativa ao mapped VBO) ----
         // Expande para triangulos em m_Expanded e desenha direto do CPU, sem
@@ -1024,20 +982,6 @@ namespace gfx
                 m_Buffer.DrawClient(GL_TRIANGLES, out.data(),
                                     static_cast<GLsizei>(out.size() / VERTEX_FLOATS));
                 ++m_GlDrawCount;
-            }
-            if (gfx::TraceIsEnabled())
-            {
-                const double t2 = gfx::NowMs();
-                g_Perf.uniformsMs += (t1 - t0);
-                g_Perf.drawMs += (t2 - t1);  // inclui copia ClientArray
-                ++g_Perf.frames;
-                if ((g_Perf.frames % 2000) == 0)
-                {
-                    Trace("[gfx] PERF/client: uniforms=%.1f draw=%.1f total=%.1f us",
-                          g_Perf.uniformsMs * 1000.0 / g_Perf.frames,
-                          g_Perf.drawMs * 1000.0 / g_Perf.frames,
-                          (g_Perf.uniformsMs + g_Perf.drawMs) * 1000.0 / g_Perf.frames);
-                }
             }
             return;
         }
@@ -1084,16 +1028,7 @@ namespace gfx
             }
             const GLint first = static_cast<GLint>(m_Buffer.Upload(vertices, vertexCount));
             if (first < 0) { return; }
-            const double t2 = gfx::TraceIsEnabled() ? gfx::NowMs() : 0.0;
             m_Buffer.Draw(coreMode, first, static_cast<GLsizei>(vertexCount));
-            if (gfx::TraceIsEnabled())
-            {
-                const double t3 = gfx::NowMs();
-                g_Perf.uniformsMs += (t1 - t0);
-                g_Perf.uploadMs += (t2 - t1);
-                g_Perf.drawMs += (t3 - t2);
-                ++g_Perf.frames;
-            }
             ++m_GlDrawCount;
             return;
         }
@@ -1176,24 +1111,7 @@ namespace gfx
         const size_t expandedCount = expanded.size() / VERTEX_FLOATS;
         const GLint first = static_cast<GLint>(m_Buffer.Upload(expanded.data(), expandedCount));
         if (first < 0) { return; }
-        const double t2 = gfx::TraceIsEnabled() ? gfx::NowMs() : 0.0;
         m_Buffer.Draw(GL_TRIANGLES, first, static_cast<GLsizei>(expandedCount));
-        if (gfx::TraceIsEnabled())
-        {
-            const double t3 = gfx::NowMs();
-            g_Perf.uniformsMs += (t1 - t0);
-            g_Perf.uploadMs += (t2 - t1);
-            g_Perf.drawMs += (t3 - t2);
-            ++g_Perf.frames;
-            if ((g_Perf.frames % 2000) == 0)
-            {
-                Trace("[gfx] PERF/draw (us): uniforms=%.1f upload=%.1f draw=%.1f total=%.1f\r\n",
-                      g_Perf.uniformsMs * 1000.0 / g_Perf.frames,
-                      g_Perf.uploadMs * 1000.0 / g_Perf.frames,
-                      g_Perf.drawMs * 1000.0 / g_Perf.frames,
-                      (g_Perf.uniformsMs + g_Perf.uploadMs + g_Perf.drawMs) * 1000.0 / g_Perf.frames);
-            }
-        }
         ++m_GlDrawCount;
     }
 }

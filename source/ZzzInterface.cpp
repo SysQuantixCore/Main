@@ -68,6 +68,12 @@ int NoticeTime = 300;
 int NoticeInverse = 0;
 NOTICE Notice[MAX_NOTICE];
 
+// Duracao das mensagens do centro (em frames a REFERENCE_FPS=25):
+//   Color 0 = amarelo (globais do servidor) = 8s -> 200 frames
+//   Color 1 = verde   (sistema: camera/helper/automove) = 2s -> 50 frames
+#define NOTICE_LIFE_GLOBAL	200
+#define NOTICE_LIFE_SYSTEM	50
+
 
 
 extern CUITextInputBox* g_pSingleTextInputBox;
@@ -510,6 +516,7 @@ void ScrollNotice()
 		for (int i = 1; i < MAX_NOTICE; i++)
 		{
 			Notice[i - 1].Color = Notice[i].Color;
+			Notice[i - 1].LifeTime = Notice[i].LifeTime;
 			strcpy(Notice[i - 1].Text, Notice[i].Text);
 		}
 	}
@@ -523,6 +530,38 @@ void ClearNotice(void)
 void CreateNotice(char* Text, int Color)
 {
 #ifdef SHUTDOWN_SCALEFORM_INFO
+	// No renderer moderno a ScaleForm e desativada (fixed-function), entao as
+	// mensagens precisam usar o renderizador de texto do proprio cliente.
+	// Renderer=modern desativa a ScaleForm (fixed-function), independente
+	// de CoreProfile=1 estar ou nao no Graphics.ini.
+	if (gfx::Config::Instance().IsModern())
+	{
+		SIZE Size;
+		g_pRenderText->SetFont(g_hFontBold);
+		g_pMultiLanguage->_GetTextExtentPoint32(g_pRenderText->GetFontDC(), Text, lstrlen(Text), &Size);
+
+		ScrollNotice();
+		Notice[NoticeCount].Color = Color;
+		Notice[NoticeCount].LifeTime = standlimit((Color == 0) ? NOTICE_LIFE_GLOBAL : NOTICE_LIFE_SYSTEM);
+		if (Size.cx < 256)
+		{
+			strcpy(Notice[NoticeCount++].Text, Text);
+		}
+		else
+		{
+			char Temp1[256];
+			char Temp2[256];
+			CutText(Text, Temp1, Temp2, strlen(Text));
+			strcpy(Notice[NoticeCount++].Text, Temp2);
+			ScrollNotice();
+			Notice[NoticeCount].Color = Color;
+		Notice[NoticeCount].LifeTime = standlimit((Color == 0) ? NOTICE_LIFE_GLOBAL : NOTICE_LIFE_SYSTEM);
+			strcpy(Notice[NoticeCount++].Text, Temp1);
+		}
+		NoticeTime = standlimit(300);
+		return;
+	}
+
 	gfxNotice::addNoticeText(Text, Color);
 #else
 	SIZE Size;
@@ -531,6 +570,7 @@ void CreateNotice(char* Text, int Color)
 
 	ScrollNotice();
 	Notice[NoticeCount].Color = Color;
+		Notice[NoticeCount].LifeTime = standlimit((Color == 0) ? NOTICE_LIFE_GLOBAL : NOTICE_LIFE_SYSTEM);
 	if (Size.cx < 256)
 	{
 		strcpy(Notice[NoticeCount++].Text, Text);
@@ -543,6 +583,7 @@ void CreateNotice(char* Text, int Color)
 		strcpy(Notice[NoticeCount++].Text, Temp2);
 		ScrollNotice();
 		Notice[NoticeCount].Color = Color;
+		Notice[NoticeCount].LifeTime = standlimit((Color == 0) ? NOTICE_LIFE_GLOBAL : NOTICE_LIFE_SYSTEM);
 		strcpy(Notice[NoticeCount++].Text, Temp1);
 	}
 	NoticeTime = standlimit(300);
@@ -551,14 +592,20 @@ void CreateNotice(char* Text, int Color)
 
 void MoveNotices()
 {
+	// Cada mensagem sobe e some aos poucos conforme seu LifeTime.
+	for (int i = 0; i < MAX_NOTICE; i++)
+	{
+		if (Notice[i].LifeTime > 0)
+			Notice[i].LifeTime--;
+	}
+
 #ifdef SHUTDOWN_SCALEFORM_INFO
-	// A ScaleForm.dll e uma biblioteca proprietaria que usa OpenGL
-	// fixed-function. Nao funciona em core profile, portanto e desativada
-	// quando o renderer moderno esta ativo.
-	if (!gfx::Config::Instance().GetCoreProfile())
+	if (!gfx::Config::Instance().IsModern())
 	{
 		gfxinit->Update(0);
 	}
+	// No moderno cada mensagem expira pelo proprio LifeTime (ver loop acima):
+	// nao precisa do NoticeTime antigo, que deslocava as mensagens no array.
 #else
 	if (NoticeTime-- <= 0)
 	{
@@ -575,13 +622,16 @@ void RenderNotices()
 		return;
 #endif // KJH_ADD_INGAMESHOP_UI_SYSTEM
 
+	// No renderer moderno a ScaleForm e desativada: desenha as mensagens com
+	// o renderizador de texto do cliente (mesmo caminho do modo sem ScaleForm).
 #ifdef SHUTDOWN_SCALEFORM_INFO
-	// Ver comentario em MoveNotices(): a ScaleForm usa OpenGL fixed-function.
-	if (!gfx::Config::Instance().GetCoreProfile())
+	if (!gfx::Config::Instance().IsModern())
 	{
 		gfxinit->Render(0);
+		return;
 	}
-#else
+#endif
+
 	EnableAlphaTest();
 	glColor3f(1.f, 1.f, 1.f);
 
@@ -594,32 +644,55 @@ void RenderNotices()
 	for (int i = 0; i < MAX_NOTICE; i++)
 	{
 		NOTICE* n = &Notice[i];
+		if (n->LifeTime <= 0 || n->Text[0] == '\0')
+			continue;
+
+		// Animacao padrao: a mensagem entra com fade-in, permanece FIXA no
+		// lugar durante a maior parte da vida, e apenas no final sobe suavemente
+		// (com easing) enquanto funda — o comportamento classico de "toast".
+		const int iMaxLife = standlimit((n->Color == 0) ? NOTICE_LIFE_GLOBAL : NOTICE_LIFE_SYSTEM);
+		const float fLife = (iMaxLife > 0) ? ((float)n->LifeTime / (float)iMaxLife) : 1.f;
+
+		// Fade-in rapido (3% inicial), alpha cheio no meio, fade-out RAPIDO (5% final)
+		// com easing quadratico para uma saida suave e natural.
+		float fAlpha;
+		if (fLife > 0.97f)
+			fAlpha = (1.f - fLife) / 0.03f;
+		else if (fLife < 0.05f)
+		{
+			const float t = fLife / 0.05f;	// 1 -> 0
+			fAlpha = t * t;					// easing: cai suavemente no inicio, rapido no fim
+		}
+		else
+			fAlpha = 1.f;
+
+		if (fAlpha < 0.f) fAlpha = 0.f;
+		if (fAlpha > 1.f) fAlpha = 1.f;
+
+		BYTE byAlpha = (BYTE)(255.f * fAlpha);
+
+		// Subida fluida sincronizada com o fade-out rapido (5% final).
+		float fRise = 0.f;
+		if (fLife < 0.05f)
+		{
+			const float t = 1.f - (fLife / 0.05f); // 0 -> 1
+			fRise = t * 20.f;
+		}
+
 		if (n->Color == 0)
 		{
-			g_pRenderText->SetBgColor(0, 0, 0, 128);
-
-			if ((NoticeInverse % standlimit(10)) >= 5)
-			{
-				g_pRenderText->SetTextColor(0xFFu, 0xC8u, 0x50u, 0xFFu);
-			}
-			else
-			{
-				g_pRenderText->SetTextColor(0xFFu, 0xC8u, 0x50u, 0x80u);
-			}
+			g_pRenderText->SetBgColor(0, 0, 0, (BYTE)(128 * byAlpha / 255));
+			g_pRenderText->SetTextColor(0xFFu, 0xC8u, 0x50u, byAlpha);
 		}
 		else
 		{
-			g_pRenderText->SetTextColor(100, 255, 200, 255);
-			g_pRenderText->SetBgColor(0, 0, 0, 128);
+			g_pRenderText->SetTextColor(100, 255, 200, byAlpha);
+			g_pRenderText->SetBgColor(0, 0, 0, (BYTE)(128 * byAlpha / 255));
 		}
 
-		if (g_bUseChatListBox == TRUE)
-			g_pRenderText->RenderText(RenderFrameX, RenderFrameY + i * 13, n->Text, 0, 0, RT3_WRITE_CENTER);
-		else
-			g_pRenderText->RenderText(RenderFrameX, RenderFrameY + i * 13, n->Text, 0, 0, RT3_WRITE_CENTER);
+		g_pRenderText->RenderText(RenderFrameX, RenderFrameY + i * 13 - (int)fRise, n->Text, 0, 0, RT3_WRITE_CENTER);
 	}
 	NoticeInverse++;
-#endif // SHUTDOWN_SCALEFORM_INFO
 }
 
 void CutText(const char* Text, char* Text1, char* Text2, int Length)

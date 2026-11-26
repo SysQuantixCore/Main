@@ -88,6 +88,5 @@ namespace gfx
         extern void (APIENTRY *fnColorMask)(GLboolean r, GLboolean g, GLboolean b, GLboolean a);
         extern void (APIENTRY *fnFrontFace)(GLenum mode);
         extern void (APIENTRY *fnClear)(GLbitfield mask);
-        extern void (APIENTRY *fnFlush)(void);
     }
 }

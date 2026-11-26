@@ -14,10 +14,4 @@ namespace gfx
     void Trace(const char* format, ...);
     void TraceEnable(bool enabled);
     bool TraceIsEnabled();
-
-    // Profiling de performance (so ativo com verbose).
-    double PerfNowMs();                    // timestamp em ms
-    void PerfAddMatrix(double ms);         // acumula tempo de matriz
-    void PerfAddState(double ms);          // acumula tempo de estado
-    void PerfReportAndReset();             // loga e zera os acumuladores
 }

@@ -108,21 +108,23 @@ void CGMItemEffect::CreatePetEffect(int sup23, BMD* b, OBJECT* o, std::vector<CU
 {
 	if (csMake != NULL && csMake->size() != 0)
 	{
-		vec3_t Position, Angle, vLight, p;
+		vec3_t Position, Angle, vLight;
 
 		for (size_t i = 0; i < csMake->size(); i++)
 		{
 			CUSTOM_EFFECT_STACK* f = &(*csMake)[i];
 
-			if (f->iBoneNumber >= 0 && f->iBoneNumber < MAX_BONES)
+			// TransformByObjectBone valida o indice contra NumBones do modelo,
+			// usa SEMPRE a matriz do proprio objeto (nunca a global compartilhada)
+			// e soma a posicao atual do objeto. O codigo anterior usava
+			// TransformPosition() com fallback para a matriz global, fazendo o
+			// efeito (brilho do horse / olhos do fenrir) aparecer solto pelo mapa
+			// quando outro modelo animava a matriz global ou o slot era reaproveitado.
+			if (f->iBoneNumber >= 0 && f->iBoneNumber < MAX_BONES && o != NULL && b != NULL)
 			{
 				f->NormalizeColor(vLight);
 
-				Vector(0.f, 0.f, 0.f, p);
-				if (o->EnableBoneMatrix && o->BoneTransform)
-					b->TransformPosition(o->BoneTransform[f->iBoneNumber], p, Position);
-				else
-					b->TransformPosition(BoneTransform[f->iBoneNumber], p, Position);
+				b->TransformByObjectBone(Position, o, f->iBoneNumber, NULL);
 
 				if (sup23 == 0)
 				{

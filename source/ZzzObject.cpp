@@ -910,6 +910,10 @@ void Draw_RenderObject(OBJECT* o, bool Translate, int Select, int ExtraMon)
 			vec3_t vLight, vPos, vPosition;
 			float fLuminosity = (float)sinf((WorldTime) * 0.002f) * 0.2f;
 
+			// Matriz de ossos propria do objeto (evita o array global compartilhado).
+			float(*pMountBone)[3][4] = (o->EnableBoneMatrix && o->BoneTransform)
+				? o->BoneTransform : BoneTransform;
+
 			b->BeginRender(1.f);
 
 			b->BodyLight[0] = 1.0f;
@@ -928,7 +932,7 @@ void Draw_RenderObject(OBJECT* o, bool Translate, int Select, int ExtraMon)
 				{
 					Vector(1.0f, 0.0f, 0.0f, vLight);
 					Vector((float)(rand() % 10 - 10) * 0.5f, 0.f, (float)(rand() % 40 - 20) * 0.5f, vPos);
-					b->TransformPosition(BoneTransform[14], vPos, vPosition, false);
+					b->TransformPosition(pMountBone[14], vPos, vPosition, false);
 					CreateParticleSync(BITMAP_SPARK + 1, vPosition, o->Angle, vLight, 15, 0.7f + (fLuminosity * 0.05f));
 				}
 
@@ -950,7 +954,7 @@ void Draw_RenderObject(OBJECT* o, bool Translate, int Select, int ExtraMon)
 
 					Vector(1.0f, 0.0f, 0.0f, vLight);
 					Vector((float)(rand() % 10 - 10) * 0.5f, 0.f, (float)(rand() % 40 - 20) * 0.5f, vPos);
-					b->TransformPosition(BoneTransform[14], vPos, vPosition, false);	// ??
+					b->TransformPosition(pMountBone[14], vPos, vPosition, false);	// ??
 					CreateParticleSync(BITMAP_SPARK + 1, vPosition, o->Angle, vLight, 15, 0.7f + (fLuminosity * 0.05f));
 				}
 				b->StreamMesh = -1;
@@ -977,19 +981,26 @@ void Draw_RenderObject(OBJECT* o, bool Translate, int Select, int ExtraMon)
 				}
 			}
 
+			// Olhos do Fenrir: usar a matriz de ossos DO PROPRIO objeto.
+			// O array global BoneTransform e compartilhado e e sobrescrito por
+			// outros modelos a cada frame, fazendo o brilho aparecer solto pelo
+			// mapa em algumas areas.
+			float(*pEyeBone)[3][4] = (o->EnableBoneMatrix && o->BoneTransform)
+				? o->BoneTransform : BoneTransform;
+
 			Vector(0.9f + fLuminosity, 0.2f + (fLuminosity * 0.5f), 0.1f + (fLuminosity * 0.5f), vLight);
 			Vector(50.f, 2.f, 11.f, vPos);
-			b->TransformPosition(BoneTransform[11], vPos, vPosition, false);
+			b->TransformPosition(pEyeBone[11], vPos, vPosition, false);
 			CreateSprite(BITMAP_LIGHT, vPosition, 0.5f + (fLuminosity * 0.1f), vLight, o);
 			CreateSprite(BITMAP_LIGHT, vPosition, 0.5f + (fLuminosity * 0.1f), vLight, o);
 			Vector(50.f, 2.f, -11.f, vPos);
-			b->TransformPosition(BoneTransform[11], vPos, vPosition, false);
+			b->TransformPosition(pEyeBone[11], vPos, vPosition, false);
 			CreateSprite(BITMAP_LIGHT, vPosition, 0.5f + (fLuminosity * 0.1f), vLight, o);
 			CreateSprite(BITMAP_LIGHT, vPosition, 0.5f + (fLuminosity * 0.1f), vLight, o);
 
 			Vector(1.0f, 0.3f, 0.2f, vLight);
 			Vector(40.f, 15.f, 0.f, vPos);
-			b->TransformPosition(BoneTransform[13], vPos, vPosition, false);
+			b->TransformPosition(pEyeBone[13], vPos, vPosition, false);
 			CreateSprite(BITMAP_LIGHT, vPosition, 1.5f, vLight, o);
 			CreateSprite(BITMAP_LIGHT, vPosition, 1.0f, vLight, o);
 
@@ -1023,16 +1034,16 @@ void Draw_RenderObject(OBJECT* o, bool Translate, int Select, int ExtraMon)
 				if (o->AnimationFrame >= 0.0f && o->AnimationFrame <= 1.5f)
 				{
 					Vector(0.0f, 0.0f, 0.0f, vPos);
-					b->TransformPosition(BoneTransform[22], vPos, vPosition, false);
+					b->TransformByObjectBone(vPosition, o, 22, vPos);
 					CreateEffectSync(MODEL_FENRIR_FOOT_THUNDER, vPosition, o->Angle, vLight, iSubType, o);
 					Vector(0.0f, 0.0f, 0.0f, vPos);
-					b->TransformPosition(BoneTransform[28], vPos, vPosition, false);
+					b->TransformByObjectBone(vPosition, o, 28, vPos);
 					CreateEffectSync(MODEL_FENRIR_FOOT_THUNDER, vPosition, o->Angle, vLight, iSubType, o);
 					Vector(0.0f, 0.0f, 0.0f, vPos);
-					b->TransformPosition(BoneTransform[36], vPos, vPosition, false);
+					b->TransformByObjectBone(vPosition, o, 36, vPos);
 					CreateEffectSync(MODEL_FENRIR_FOOT_THUNDER, vPosition, o->Angle, vLight, iSubType, o);
 					Vector(0.0f, 0.0f, 0.0f, vPos);
-					b->TransformPosition(BoneTransform[44], vPos, vPosition, false);
+					b->TransformByObjectBone(vPosition, o, 44, vPos);
 					CreateEffectSync(MODEL_FENRIR_FOOT_THUNDER, vPosition, o->Angle, vLight, iSubType, o);
 				}
 			}
@@ -1041,19 +1052,19 @@ void Draw_RenderObject(OBJECT* o, bool Translate, int Select, int ExtraMon)
 				if (o->AnimationFrame > 1.f && o->AnimationFrame <= 1.4f)
 				{
 					Vector(0.0f, 0.0f, 0.0f, vPos);
-					b->TransformPosition(BoneTransform[22], vPos, vPosition, false);
+					b->TransformByObjectBone(vPosition, o, 22, vPos);
 					CreateEffectSync(MODEL_FENRIR_FOOT_THUNDER, vPosition, o->Angle, vLight, iSubType, o);
 					Vector(0.0f, 0.0f, 0.0f, vPos);
-					b->TransformPosition(BoneTransform[28], vPos, vPosition, false);
+					b->TransformByObjectBone(vPosition, o, 28, vPos);
 					CreateEffectSync(MODEL_FENRIR_FOOT_THUNDER, vPosition, o->Angle, vLight, iSubType, o);
 				}
 				else if (o->AnimationFrame > 4.8f && o->AnimationFrame <= 5.2f)
 				{
 					Vector(0.0f, 0.0f, 0.0f, vPos);
-					b->TransformPosition(BoneTransform[36], vPos, vPosition, false);
+					b->TransformByObjectBone(vPosition, o, 36, vPos);
 					CreateEffectSync(MODEL_FENRIR_FOOT_THUNDER, vPosition, o->Angle, vLight, iSubType, o);
 					Vector(0.0f, 0.0f, 0.0f, vPos);
-					b->TransformPosition(BoneTransform[44], vPos, vPosition, false);
+					b->TransformByObjectBone(vPosition, o, 44, vPos);
 					CreateEffectSync(MODEL_FENRIR_FOOT_THUNDER, vPosition, o->Angle, vLight, iSubType, o);
 				}
 			}

@@ -399,7 +399,8 @@ bool SEASON3B::CNewUIHotKey::UpdateKeyEvent()
 		if (GMProtect->shutdown_oficial_helper())
 		{
 #if MAIN_UPDATE > 303
-			if (SEASON3B::IsPress(VK_HOME) && GetFocus() == gwinhandle->GethWnd())
+			if ((SEASON3B::IsPress(VK_HOME) || SEASON3B::IsPress('V'))
+				&& GetFocus() == gwinhandle->GethWnd())
 			{
 				if (gmAIController->IsRunning() == true)
 					SendRequestStartHelper(true);

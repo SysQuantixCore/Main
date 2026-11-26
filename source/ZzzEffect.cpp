@@ -4525,48 +4525,59 @@ void CreateEffect(OBJECT* o, int Type, vec3_t Position, vec3_t Angle, vec3_t Lig
 
 			VectorCopy(Light, o->Light);
 
+			// Raios ao redor do Fenrir: usamos a matriz de ossos do PROPRIO
+			// dono (o->Owner), nunca o array global compartilhado. O global era
+			// sobrescrito por outros objetos (peixes, etc) e fazia o raio
+			// aparecer solto pelo mapa. O modelo tambem deve ser o do dono.
+			OBJECT* pOwner = o->Owner;
+			BMD* p_b = (pOwner != NULL) ? gmClientModels->GetModel(pOwner->Type) : NULL;
+			float(*pOwnerBone)[3][4] = (pOwner && pOwner->EnableBoneMatrix && pOwner->BoneTransform)
+				? pOwner->BoneTransform : BoneTransform;
+
 			vec3_t vPos;
 			Vector(0.0f, 0.0f, 0.0f, vPos);
-			BMD* p_b = gmClientModels->GetModel(o->Owner->Type);
 			int irandom = rand() % 30;
 
-			if (irandom >= 1 && irandom <= 2)
+			if (p_b != NULL)
 			{
-				p_b->TransformPosition(BoneTransform[10], vPos, o->Position, false);
-			}
-			else if (irandom == 3)
-			{
-				o->Scale -= (0.2f);
-				p_b->TransformPosition(BoneTransform[14], vPos, o->Position, false);
-			}
-			else if (irandom >= 4 && irandom <= 5)
-			{
-				p_b->TransformPosition(BoneTransform[2], vPos, o->Position, false);
-			}
-			else if (irandom >= 6 && irandom <= 7)
-			{
-				o->Scale -= (0.2f);
-				if (rand() % 2 == 0)
-					p_b->TransformPosition(BoneTransform[50], vPos, o->Position, false);
+				if (irandom >= 1 && irandom <= 2)
+				{
+					p_b->TransformPosition(pOwnerBone[10], vPos, o->Position, false);
+				}
+				else if (irandom == 3)
+				{
+					o->Scale -= (0.2f);
+					p_b->TransformPosition(pOwnerBone[14], vPos, o->Position, false);
+				}
+				else if (irandom >= 4 && irandom <= 5)
+				{
+					p_b->TransformPosition(pOwnerBone[2], vPos, o->Position, false);
+				}
+				else if (irandom >= 6 && irandom <= 7)
+				{
+					o->Scale -= (0.2f);
+					if (rand() % 2 == 0)
+						p_b->TransformPosition(pOwnerBone[50], vPos, o->Position, false);
+					else
+						p_b->TransformPosition(pOwnerBone[51], vPos, o->Position, false);
+				}
+				else if (irandom == 8)
+				{
+					o->Scale -= (0.2f);
+					p_b->TransformPosition(pOwnerBone[53], vPos, o->Position, false);
+				}
+				else if (irandom >= 9 && irandom <= 10)
+				{
+					o->Live = false;
+					o->Alpha = 0.0f;
+				}
 				else
-					p_b->TransformPosition(BoneTransform[51], vPos, o->Position, false);
-			}
-			else if (irandom == 8)
-			{
-				o->Scale -= (0.2f);
-				p_b->TransformPosition(BoneTransform[53], vPos, o->Position, false);
-			}
-			else if (irandom >= 9 && irandom <= 10)
-			{
-				o->Live = false;
-				o->Alpha = 0.0f;
-			}
-			else
-			{
-				o->Scale += (0.1f);
-				o->Position[0] += (rand() % 240 - 120);
-				o->Position[1] += (rand() % 10 - 5);
-				o->Position[2] += (110);
+				{
+					o->Scale += (0.1f);
+					o->Position[0] += (rand() % 240 - 120);
+					o->Position[1] += (rand() % 10 - 5);
+					o->Position[2] += (110);
+				}
 			}
 
 			vec3_t vLight;

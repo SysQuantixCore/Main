@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "gfx/GfxTrace.h"
+#include "gfx/GfxConfig.h"
 #include "UIManager.h"
 #include "GuildCache.h"
 #include "ZzzBMD.h"
@@ -13769,12 +13770,29 @@ void ReceiveHelperResult(BYTE* ReceiveBuffer)
 		else
 		{
 			gmAIController->Start();
-			gfxNotice::addLongMovementText(GlobalText[3562], 20, 150, 2000);
+
+			// No renderer moderno a ScaleForm e desativada: usar o notice do
+			// cliente para nao chamar gfxinit->Invoke em ponteiro nulo.
+			if (gfx::Config::Instance().IsModern())
+			{
+				CreateNotice(const_cast<char*>(GlobalText[3562]), 1);
+			}
+			else
+				gfxNotice::addLongMovementText(GlobalText[3562], 20, 150, 2000);
 		}
 	}
 	else if (Data->result == 1)
 	{
 		gmAIController->Stop();
+
+		// Mostra a mensagem de desativacao do MuHelper (tecla V),
+		// usando o notice do cliente no renderer moderno (ScaleForm desativada).
+		if (gfx::Config::Instance().IsModern())
+		{
+			CreateNotice(const_cast<char*>(GlobalText[3563]), 1);
+		}
+		else
+			gfxNotice::addLongMovementText(GlobalText[3563], 20, 150, 2000);
 	}
 	else if (Data->result == 2)
 	{

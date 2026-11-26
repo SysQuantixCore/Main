@@ -4377,11 +4377,9 @@ bool SEASON3B::CNewUIMyInventory::MoveItemProcess()
 {
 	CNewUIPickedItem* pPickedItem = CNewUIInventoryCtrl::GetPickedItem();
 
-	bool bHoldingVisibleItem = (pPickedItem != NULL && pPickedItem->IsVisible());
-
 	if (!(g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_TRADE)
 		|| g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_STORAGE)
-		|| g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_NPCSHOP)) && !bHoldingVisibleItem)
+		|| g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_NPCSHOP)) && pPickedItem == NULL)
 	{
 		if (SEASON3B::IsPress(VK_RBUTTON) && this->GetRepairMode() != REPAIR_MODE_ON && EquipmentItem == false)
 		{

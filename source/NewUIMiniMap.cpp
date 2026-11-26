@@ -18,6 +18,21 @@
 #include "ZzzLodTerrain.h"
 #include "ScaleForm.h"
 #include "TextClien.h"
+#include "gfx/GfxConfig.h"
+#include "ZzzInterface.h"
+
+namespace
+{
+	// ScaleForm (addLongMovementText) e desativada no renderer moderno:
+	// usar o notice do cliente evita chamada em ponteiro nulo.
+	void MiniMapNotice()
+	{
+		if (gfx::Config::Instance().IsModern())
+			CreateNotice(const_cast<char*>(gTextClien.TextClien_Khac[2]), 1);
+		else
+			gfxNotice::addLongMovementText(gTextClien.TextClien_Khac[2], 20, 150, 2000);
+	}
+}
 
 using namespace SEASON3B;
 
@@ -370,7 +385,7 @@ bool SEASON3B::CNewUIMiniMap::movement_automatic()
 					SendMove(Hero, &Hero->Object);
 				}
 
-				gfxNotice::addLongMovementText(gTextClien.TextClien_Khac[2], 20, 150, 2000); //"Auto-Moving"
+				MiniMapNotice(); //"Auto-Moving"
 			}
 		}
 		else if (distance >= 12.f)
@@ -383,7 +398,7 @@ bool SEASON3B::CNewUIMiniMap::movement_automatic()
 			{
 				Hero->Movement = true;
 				SendMove(Hero, &Hero->Object);
-				gfxNotice::addLongMovementText(gTextClien.TextClien_Khac[2], 20, 150, 2000); //"Auto-Moving"
+				MiniMapNotice(); //"Auto-Moving"
 			}
 		}
 
@@ -504,7 +519,7 @@ bool SEASON3B::CNewUIMiniMap::runtime_update_target()
 					this->m_MoveY = Ty;
 					this->m_Map = World;
 
-					gfxNotice::addLongMovementText("Auto-Moving", 20, 150, 2000);
+					MiniMapNotice();
 					this->FindPath(Hero->PositionX, Hero->PositionY, this->m_MoveX, this->m_MoveY);
 				}
 			}

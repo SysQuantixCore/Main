@@ -683,7 +683,7 @@ LONG CWINHANDLE::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 #ifdef SHUTDOWN_SCALEFORM_INFO
 	// A ScaleForm.dll usa OpenGL fixed-function e nao funciona em core
 	// profile (renderer moderno).
-	if (!gfx::Config::Instance().GetCoreProfile() &&
+	if (!gfx::Config::Instance().IsModern() &&
 		(SceneFlag == LOG_IN_SCENE || SceneFlag == CHARACTER_SCENE || SceneFlag == MAIN_SCENE))
 	{
 		gfxinit->CallBack(hwnd, msg, wParam, lParam);

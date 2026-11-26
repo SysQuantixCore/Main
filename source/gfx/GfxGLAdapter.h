@@ -106,10 +106,6 @@ void gfxGLColorMask(GLboolean r, GLboolean g, GLboolean b, GLboolean a);
 void gfxGLFrontFace(GLenum mode);
 void gfxGLClear(GLbitfield mask);
 
-// Profiling de apresentacao (glFlush/SwapBuffers) - so com verbose.
-void gfxGLFlush(void);
-BOOL gfxGLSwapBuffers(HDC hdc);
-
 // ---------------------------------------------------------------------
 // Macros de redirecionamento
 // ---------------------------------------------------------------------
@@ -169,5 +165,3 @@ BOOL gfxGLSwapBuffers(HDC hdc);
 #define glColorMask          gfxGLColorMask
 #define glFrontFace          gfxGLFrontFace
 #define glClear              gfxGLClear
-#define glFlush              gfxGLFlush
-#define SwapBuffers          gfxGLSwapBuffers

@@ -89,9 +89,9 @@ void CGMCameraWorld::Toggle()
 	m_Enable = !m_Enable;
 
 	if (m_Enable != 0)
-		CreateNotice(gTextClien.TextClien_Khac[0], 0); //"Cam ONLINE"
+		CreateNotice(gTextClien.TextClien_Khac[0], 1); //"Cam ONLINE"
 	else
-		CreateNotice(gTextClien.TextClien_Khac[1], 0); //"Cam OFFLINE"
+		CreateNotice(gTextClien.TextClien_Khac[1], 1); //"Cam OFFLINE"
 
 	if (((m_Default->IsLoad == 0) ? (m_Default->IsLoad++) : m_Default->IsLoad) == 0)
 	{
@@ -104,6 +104,7 @@ void CGMCameraWorld::Backup()
 	if (this->m_Enable != 0 && SceneFlag == MAIN_SCENE)
 	{
 		this->DefaultValues();
+		CreateNotice("Câmera Restaurada", 1);
 	}
 }
 

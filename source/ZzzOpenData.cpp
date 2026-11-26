@@ -6110,7 +6110,7 @@ void OpenBasicData(HDC hDC)
 
 #ifdef SHUTDOWN_SCALEFORM_INFO
 	// ScaleForm usa OpenGL fixed-function: desativado no renderer moderno.
-	if (!gfx::Config::Instance().GetCoreProfile())
+	if (!gfx::Config::Instance().IsModern())
 	{
 		gfxinit->LoadMovie();
 	}
