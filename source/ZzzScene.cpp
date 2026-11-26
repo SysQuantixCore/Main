@@ -2,6 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
+#include "gfx/GfxConfig.h"
 #include "UIManager.h"
 #include "GuildCache.h"
 #include "ZzzOpenglUtil.h"
@@ -2870,6 +2871,12 @@ void MainScene(HDC hDC)
 
 		g_pNewKeyInput->ScanAsyncKeyState();
 
+		// No moderno a UI da selecao de personagem usa MouseX/MouseY (via
+		// WM_MOUSEMOVE), que chega atrasado em relacao ao ponteiro real.
+		// Login e jogo ja estao ok; sincronizar somente esta tela.
+		if (SceneFlag == CHARACTER_SCENE && gfx::Config::Instance().IsModern())
+			UpdateCursorPositionFromOS();
+
 		if (LOG_IN_SCENE == SceneFlag || CHARACTER_SCENE == SceneFlag)
 		{
 			double dDeltaTick = g_pTimer->GetTimeElapsed();
@@ -2891,6 +2898,11 @@ void MainScene(HDC hDC)
 			NewMoveCharacterScene();
 			break;
 		case MAIN_SCENE:
+			// No renderer moderno a ScaleForm esta desativada e a UI do cliente
+			// usa CInput para saber onde o cursor esta. Sem esse Update a
+			// posicao fica congelada desde a tela de selecao de personagem.
+			if (gfx::Config::Instance().IsModern())
+				CInput::Instance().Update();
 			MoveMainScene();
 			break;
 		}

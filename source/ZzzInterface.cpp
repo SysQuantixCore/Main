@@ -8631,6 +8631,40 @@ void RenderPartyHP()
 
 extern int g_iKeyPadEnable;
 
+// No renderer moderno o loop de mensagens processa apenas um WM_MOUSEMOVE por
+// iteracao, o que faz o cursor desenhado atrasar em relacao ao ponteiro real
+// (principalmente na selecao de personagem e em jogo, onde ha mais trabalho
+// por frame). Amostrar o cursor do Windows diretamente garante que o sprite
+// acompanhe o movimento sem atraso.
+void UpdateCursorPositionFromOS()
+{
+	HWND hwnd = gwinhandle ? gwinhandle->GethWnd() : NULL;
+	if (hwnd == NULL)
+		return;
+
+	POINT pt;
+	if (!::GetCursorPos(&pt) || !::ScreenToClient(hwnd, &pt))
+		return;
+
+	float fX = (float)pt.x;
+	float fY = (float)pt.y;
+
+	if (fX < 0.f)
+		fX = 0.f;
+	else if (fX > (float)WindowWidth)
+		fX = (float)WindowWidth;
+
+	if (fY < 0.f)
+		fY = 0.f;
+	else if (fY > (float)WindowHeight)
+		fY = (float)WindowHeight;
+
+	MouseRenderX = fX;
+	MouseRenderY = fY;
+	MouseX = fX / g_fScreenRate_x;
+	MouseY = fY / g_fScreenRate_y;
+}
+
 void RenderCursor()
 {
 	EnableAlphaTest();

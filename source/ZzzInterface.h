@@ -16,6 +16,8 @@ extern int    NoticeCount;
 extern int    NoticeTime;
 extern NOTICE Notice[MAX_NOTICE];
 
+void UpdateCursorPositionFromOS();
+
 extern bool WhisperEnable;
 
 extern bool LockInputStatus;
